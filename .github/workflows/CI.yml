@@ -25,7 +25,6 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v2
       - name: Node install
-        working-directory: frontend
         run: npm install --legacy-peer-deps
       - name: Cypress run
         uses: cypress-io/github-action@v5
