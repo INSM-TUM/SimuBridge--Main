@@ -1,4 +1,4 @@
-import { getScenarioFileName, setFile, updateProject } from "../../src/util/Storage";
+import { getScenarioFileName, purgeDatabase, setFile, updateProject } from "../../src/util/Storage";
 import defaultScenarioData from '../fixtures/defaultTestScenario.json'
 
 function udescribe(){}; // For debug; quick way to comment out a test
@@ -6,14 +6,19 @@ function udescribe(){}; // For debug; quick way to comment out a test
 const defaultProjectName = 'testProject';
 const defaultScenarioName = defaultScenarioData.scenarioName;
 
-
 function loadDefaultProjectData() {
     const fileName = getScenarioFileName(defaultScenarioName);
-    return cy.wrap(async () => {
+    return cy.wrap((async () => {
         await setFile(defaultProjectName, fileName, JSON.stringify(defaultScenarioData));
         await updateProject(defaultProjectName);
-    }).then(() => cy.reload()) // Reload to ensure new data is displayed
+    })()).then(() => cy.reload()) // Reload to ensure new data is displayed
 }
+
+
+// There seems to be an issue with test isolation on the local runner. This should at least isolate suide runs.
+before(() => {
+    purgeDatabase();
+});
 
 
 beforeEach(() => {
