@@ -69,7 +69,7 @@ describe('Inside a project', () => {
     beforeEach(() => {
         cy.visit('http://localhost:3000'); // Necessary duplicate to avoid not being able to click on select project
         // load and open default project:
-        cy.wrap(loadDefaultProjectData()).then(() => cy.findByText(defaultProjectName).click())
+        cy.wrap(loadDefaultProjectData()).then(() => cy.findByText(defaultProjectName, {timeout : 8000}).click())
     });
 
 
