@@ -7,15 +7,17 @@ const defaultProjectName = 'testProject';
 const defaultScenarioName = defaultScenarioData.scenarioName;
 
 
-async function loadDefaultProjectData() {
+function loadDefaultProjectData() {
     const fileName = getScenarioFileName(defaultScenarioName);
-    await setFile(defaultProjectName, fileName, JSON.stringify(defaultScenarioData));
-    await updateProject(defaultProjectName);
+    return cy.wrap(async () => {
+        await setFile(defaultProjectName, fileName, JSON.stringify(defaultScenarioData));
+        await updateProject(defaultProjectName);
+    }).then(() => cy.reload()) // Reload to ensure new data is displayed
 }
 
 
 beforeEach(() => {
-    cy.visit('http://localhost:3000')
+    cy.visit('http://localhost:3000');
 });
 
 describe('Application', () => {
@@ -56,7 +58,7 @@ describe('Project Management', () => {
     });
 
     it('allows to select an existing project', () => {
-        cy.wrap(loadDefaultProjectData()).then(() => {
+        loadDefaultProjectData().then(() => {
             cy.findByText(defaultProjectName).click();
             expectCurrentProjectToBe(defaultProjectName);
         });
@@ -67,7 +69,7 @@ describe('Inside a project', () => {
     beforeEach(() => {
         cy.visit('http://localhost:3000'); // Necessary duplicate to avoid not being able to click on select project
         // load and open default project:
-        cy.wrap(loadDefaultProjectData()).then(() => cy.findByText(defaultProjectName).click())
+        loadDefaultProjectData().then(() => cy.findByText(defaultProjectName).click())
     });
 
 
