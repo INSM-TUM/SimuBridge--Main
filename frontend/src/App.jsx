@@ -22,7 +22,7 @@ import BpmnView from './components/ModelbasedParameters/BpmnView';
 import SimulationModelModdle from 'simulation-bridge-datamodel/DataModel';
 import ModelBasedOverview from './components/TablesOverviewComparison/ModelBasedOverview';
 import { ModelData, ScenarioData } from './util/DataHandles';
-
+import LcaParameters from './components/LcaParameters/LcaParameters';
 
 const errorsToWarn = [
   "Warning:",
@@ -318,6 +318,7 @@ useEffect(() => {
 
               <Route path="/simulation" element={<SimulationPage path="/simulation"  {...{projectName, getData, toasting }} />} />
               <Route path="/processminer" element={<ProcessMinerPage path="/processminer" {...{projectName, getData, toasting }} />} />
+              <Route path="/lcaparameters" element={<LcaParameters path="/lcaparameters" {...{projectName, getData, toasting }} />} />
               <Route path="/debug" element={<DebugPage path="/debug" {...{projectName, getData, toasting }} />} />
               <Route path='*' element={<Navigate to='/overview' />} />
             </Routes>

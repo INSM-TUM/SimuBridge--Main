@@ -43,6 +43,7 @@ import { downloadData } from '../../util/Storage';
     let LinkItems2 = [
       { name: 'Run Simulation', icon: FiPlay, path: '/simulation', event: () =>  setCurrent("Run Simulation") },
       { name: 'Run Process Miner', icon: FiPlay, path: '/processminer', event: () =>  setCurrent("Run Process Miner") },
+      { name: 'Configure LCA', icon: FiPlay, path: '/lcaparameters', event: () =>  setCurrent("Configure LCA Parameters") },
       // { name: 'Debugging View', icon: FiPlay, path: '/debug', event: () =>  setCurrent("Debug View") }
     ];
 

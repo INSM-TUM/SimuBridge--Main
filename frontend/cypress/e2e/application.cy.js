@@ -125,6 +125,7 @@ describe('Inside a project', () => {
             clickButton('Model-based Parameters').shouldLeadTo('/modelbased');
             clickButton('Run Simulation').shouldLeadTo('/simulation');
             clickButton('Run Process Miner').shouldLeadTo('/processminer');
+            clickButton('Configure LCA data').shouldLeadTo('/LcaParameters');
             clickButton('Project Overview').shouldLeadTo('/overview');
         });
 
