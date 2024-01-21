@@ -1,6 +1,7 @@
 import React, { useState, useRef } from "react";
 import { Flex, Heading, Card, CardHeader, CardBody, Text, Select, Stack, Button, Progress, Box, Textarea, UnorderedList, ListItem } from '@chakra-ui/react';
 import { FiChevronDown } from 'react-icons/fi';
+import Dropdown from './Dropdown';
 
 const LcaParameters = () => {
     const [inputValue, setInputValue] = useState('');
@@ -38,9 +39,15 @@ const LcaParameters = () => {
           // Handle errors as needed
         });
     };
+
+    const[select, setSelected] = useState("Choose Abstract Component");
+    const[selectC, setSelectedC] = useState("Choose Concrete Component");
   
     return (
 <div>
+
+
+
         <label
         style={{
             padding: '20px 5px',
@@ -106,8 +113,39 @@ Enter URL:
             Fetch
           </button>
         </div>
-      </div>
+        <hr style={{borderTop: '0.1px solid black'}}/>
+        
+        <div className="App" style={{  /* Here starts the first activity configuration */
+  display: 'flex', 
+  alignItems: 'center', 
+  /* Here ends the first activity configuration */
+}}>
+<Dropdown selected={select} setSelected={setSelected} />
+</div> 
+
+<div style={{  /* Here starts the second activity configuration */
+  display: 'flex', 
+  alignItems: 'center', 
+  /* Here ends the second activity configuration */
+}}></div>
+
+<div style={{  /* Here starts the third activity configuration */
+  display: 'flex', 
+  alignItems: 'center', 
+  /* Here ends the third activity configuration */
+}}></div>
+
+<div style={{  /* Here starts the fourth activity configuration */
+  display: 'flex', 
+  alignItems: 'center', 
+  /* Here ends the fourth activity configuration */
+}}></div>
+
+
+
+
+
+    </div>  
     );
   };
-  
 export default LcaParameters;
