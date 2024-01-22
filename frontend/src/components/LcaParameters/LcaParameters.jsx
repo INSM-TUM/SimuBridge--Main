@@ -2,6 +2,7 @@ import React, { useState, useRef } from "react";
 import { Flex, Heading, Card, CardHeader, CardBody, Text, Select, Stack, Button, Progress, Box, Textarea, UnorderedList, ListItem } from '@chakra-ui/react';
 import { FiChevronDown } from 'react-icons/fi';
 import Dropdown from './Dropdown';
+import "./styles.css"
 
 const LcaParameters = () => {
     const [inputValue, setInputValue] = useState('');
@@ -45,7 +46,6 @@ const LcaParameters = () => {
   
     return (
 <div>
-
 
 
         <label
@@ -113,39 +113,86 @@ Enter URL:
             Fetch
           </button>
         </div>
-        <hr style={{borderTop: '0.1px solid black'}}/>
+
+
+        <hr style={{borderTop: '2px solid black'}}/>
+        <br></br>
         
-        <div className="App" style={{  /* Here starts the first activity configuration */
-  display: 'flex', 
-  alignItems: 'center', 
-  /* Here ends the first activity configuration */
-}}>
-<Dropdown selected={select} setSelected={setSelected} />
-</div> 
+      
+      <div className="Big-Container" style={{ 
+              border: '0.1px solid black',
+              padding: '0px',
+              margin: '0px',}}>
+                                <div style={{  /* Here starts the first activity configuration */
+                                                              display: 'flex', 
+                                                              alignItems: 'center', 
+                                                              /* Here ends the first activity configuration */
+                                                          }}>
+                                        <label style={{
+                                                        padding: '5px',
+                                                        fontSize: '15px',
+                                                        fontWeight: 'bold',
+                                                    }}>
+                                Activity 1
+                                        </label>
+                                <Dropdown selected={select} setSelected={setSelected} />
+                                <Dropdown selected={select} setSelected={setSelected} />
+                                </div> 
 
-<div style={{  /* Here starts the second activity configuration */
-  display: 'flex', 
-  alignItems: 'center', 
-  /* Here ends the second activity configuration */
-}}></div>
+                                <div style={{  /* Here starts the second activity configuration */
+                                  display: 'flex', 
+                                  alignItems: 'center', 
+                                  /* Here ends the second activity configuration */
+                                                    
+                                }}>
+                                  <label style={{
+                                                        padding: '5px',
+                                                        fontSize: '15px',
+                                                        fontWeight: 'bold',
+                                                    }}>
+                                Activity 2
+                                        </label>
+                                <Dropdown selected={select} setSelected={setSelected} />
+                                <Dropdown selected={select} setSelected={setSelected} />
+                                </div>
 
-<div style={{  /* Here starts the third activity configuration */
-  display: 'flex', 
-  alignItems: 'center', 
-  /* Here ends the third activity configuration */
-}}></div>
+                                <div style={{  /* Here starts the third activity configuration */
+                                  display: 'flex', 
+                                  alignItems: 'center', 
+                                  /* Here ends the third activity configuration */
+                                }}>
+                                  <label style={{
+                                                        padding: '5px',
+                                                        fontSize: '15px',
+                                                        fontWeight: 'bold',
+                                                    }}>
+                                Activity 3
+                                        </label>
+                                <Dropdown selected={select} setSelected={setSelected} />
+                                <Dropdown selected={select} setSelected={setSelected} />
+                                </div>
 
-<div style={{  /* Here starts the fourth activity configuration */
-  display: 'flex', 
-  alignItems: 'center', 
-  /* Here ends the fourth activity configuration */
-}}></div>
+                                <div style={{  /* Here starts the fourth activity configuration */
+                                  display: 'flex', 
+                                  alignItems: 'center', 
+                                  /* Here ends the fourth activity configuration */
+                                }}>
+                                  <label style={{
+                                                        padding: '5px',
+                                                        fontSize: '15px',
+                                                        fontWeight: 'bold',
+                                                    }}>
+                                Activity 4
+                                        </label>
+                                <Dropdown selected={select} setSelected={setSelected} />
+                                <Dropdown selected={select} setSelected={setSelected} />
+                                </div>
+      </div>
 
 
 
 
-
-    </div>  
+</div>  
     );
   };
 export default LcaParameters;
