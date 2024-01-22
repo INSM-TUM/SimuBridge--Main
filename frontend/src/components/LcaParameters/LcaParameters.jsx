@@ -129,7 +129,7 @@ Enter URL:
                                                               /* Here ends the first activity configuration */
                                                           }}>
                                         <label style={{
-                                                        padding: '5px',
+                                                        padding: '5px 10px',
                                                         fontSize: '15px',
                                                         fontWeight: 'bold',
                                                     }}>
@@ -146,7 +146,7 @@ Enter URL:
                                                     
                                 }}>
                                   <label style={{
-                                                        padding: '5px',
+                                                        padding: '5px 10px',
                                                         fontSize: '15px',
                                                         fontWeight: 'bold',
                                                     }}>
@@ -162,7 +162,7 @@ Enter URL:
                                   /* Here ends the third activity configuration */
                                 }}>
                                   <label style={{
-                                                        padding: '5px',
+                                                        padding: '5px 10px',
                                                         fontSize: '15px',
                                                         fontWeight: 'bold',
                                                     }}>
@@ -178,7 +178,7 @@ Enter URL:
                                   /* Here ends the fourth activity configuration */
                                 }}>
                                   <label style={{
-                                                        padding: '5px',
+                                                        padding: '5px 10px',
                                                         fontSize: '15px',
                                                         fontWeight: 'bold',
                                                     }}>
