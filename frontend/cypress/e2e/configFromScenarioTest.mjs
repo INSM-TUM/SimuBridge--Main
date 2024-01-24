@@ -2873,5 +2873,5 @@ const scenarioDataWithCostVariants =
         ]
     }
 
-var {globalConfig, simConfigs} = await convertScenario(scenarioData);
+var {globalConfig, simConfigs} = await convertScenario(scenarioDataWithCostVariants);
 console.log(globalConfig);
