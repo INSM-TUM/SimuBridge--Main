@@ -21,6 +21,11 @@ export default {
     createAbstractCostDrivers: function (abstractCostDrivers) {
         return abstractCostDrivers.map(abstractCostDriver => createOneAbstractCostDriver(abstractCostDriver));
     },
+
+    createVariants: function (variants) {
+        return variants.map(variant => createOneVariant(variant));
+    },
+
     // creates all tasks, calls function to create a single task
     createTasks: function (obj) {
         return obj.map(createOneTask);
