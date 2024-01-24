@@ -165,8 +165,9 @@ function createOneAbstractCostDriver(abstractCostDriver) {
         _attributes : {
             id : abstractCostDriver.id // TODO: see if defaultTimeUnit is to be added
         },
-        abstractCostDriver : abstractCostDriver.concreteCostDrivers.map(item => createOneConcreteCostDriver(item))
+        concreteCostDriver : abstractCostDriver.concreteCostDrivers.map(item => createOneConcreteCostDriver(item))
     };
+
 }
 
 function createOneConcreteCostDriver(concreteCostDriver) { // aka createOneCon

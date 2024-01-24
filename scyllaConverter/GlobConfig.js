@@ -44,6 +44,8 @@ function createGlobConfig(scenario) {
     //timetables:
     timetables.timetable = conv_ele.createTimeTables(scenario.resourceParameters.timeTables);
 
+    costDriver.abstractCostDriver = conv_ele.createAbstractCostDrivers(scenario.resourceParameters.costDrivers);
+
     attributes.id = scenario.scenarioName + '_Global'
     globConfig.resourceData = resourceData;
     globConfig.timetables = timetables;
