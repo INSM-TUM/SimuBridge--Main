@@ -92,6 +92,7 @@ function createOneTask(activity) {
     var attributes = new Object;
     var resource = new Array;
     var resources = new Object;
+    var costDrivers = new Object;
     attributes.id = activity.id
     // TODO unneeded but would be nice attributes.name = activity.name.replaceAll('\n', ' ')
     task.duration = createOneDistributionWithTime(activity.duration);
@@ -105,6 +106,11 @@ function createOneTask(activity) {
             resource.push(createOneResourceForTask(activity.resources[resIndex]));
         }
     }
+    if (activity.costDrivers){
+        costDrivers.costDriver = activity.costDrivers.map(costDriver => createOneCostDriverForTask(costDriver));
+        task.costDrivers = costDrivers;
+    }
+
     resources.resource = resource;
     task.resources = resources;
     task._attributes = attributes;
@@ -145,7 +151,13 @@ function createOneResourceForTask(resource) {
     res._attributes = attributes;
     return res;
 }
-
+function createOneCostDriverForTask(costDriverID) {
+    var costDriver = new Object;
+    var attributes = new Object;
+    attributes.id = costDriverID;
+    costDriver._attributes = attributes;
+    return costDriver;
+}
 // translates a distribution with timeunit, e.g., arrival rates or durations:
 function createOneDistributionWithTime(distributionWithTimeUnit) {
     return {
@@ -173,6 +185,24 @@ function createOneAbstractCostDriver(abstractCostDriver) {
         concreteCostDriver : abstractCostDriver.concreteCostDrivers.map(item => createOneConcreteCostDriver(item))
     };
 
+}
+
+function createOneVariant(variant) {
+    return {
+        _attributes : {
+            id : variant.id,
+            frequency : variant.frequency
+        },
+        driver : variant.drivers.map(driver=> createOneDriver(driver))
+    };
+}
+function createOneDriver(driver) {
+    var item = new Object;
+    var attributes = new Object;
+    attributes.id = driver.id;
+    attributes.cost = driver.cost;
+    item._attributes = attributes;
+    return item;
 }
 
 function createOneConcreteCostDriver(concreteCostDriver) { // aka createOneCon
