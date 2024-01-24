@@ -2404,6 +2404,9 @@ const scenarioDataWithCostVariants =
                                 "Role 3",
                                 "Role 5"
                             ],
+                            "costDrivers": [
+                                "Delivery"
+                            ],
                             "cost": 0,
                             "duration": {
                                 "distributionType": "normal",
