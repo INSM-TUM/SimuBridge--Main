@@ -18,7 +18,9 @@ export default {
     createTimeTables: function (timeTables) {
         return timeTables.map(timeTable => createOneTimeTable(timeTable));
     },
-
+    createAbstractCostDrivers: function (abstractCostDrivers) {
+        return abstractCostDrivers.map(abstractCostDriver => createOneAbstractCostDriver(abstractCostDriver));
+    },
     // creates all tasks, calls function to create a single task
     createTasks: function (obj) {
         return obj.map(createOneTask);
@@ -157,6 +159,23 @@ function createOneTimeTable(timetable) {
         },
         timetableItem : timetable.timeTableItems.map(item => createOneTimeTableItem(item))
     };
+}
+function createOneAbstractCostDriver(abstractCostDriver) {
+    return {
+        _attributes : {
+            id : abstractCostDriver.id // TODO: see if defaultTimeUnit is to be added
+        },
+        abstractCostDriver : abstractCostDriver.concreteCostDrivers.map(item => createOneConcreteCostDriver(item))
+    };
+}
+
+function createOneConcreteCostDriver(concreteCostDriver) { // aka createOneCon
+    var item = new Object;
+    var attributes = new Object;
+    attributes.id = concreteCostDriver.id;
+    attributes.cost = concreteCostDriver.cost;
+    item._attributes = attributes;
+    return item;
 }
 
 // create one item of a timetable
