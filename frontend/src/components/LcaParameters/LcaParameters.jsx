@@ -42,15 +42,19 @@ const LcaParameters = () => {
         });
     };
 
+    const [variants, setMyVariants] = useState([]);
+    const [myConfig, setMyConfig] = useState('');
     const handleSaveButtonClick = () => {
 //Handles the button that saves the variant configuration
-      
+    //const newConfig = 'New Configuration';
+    setMyConfig(inputName);
+    setMyVariants(prevVariants => [...prevVariants, myConfig]);
     };
 
 
     const[select, setSelected] = useState("Choose Abstract Component");
     const[selectC, setSelectedC] = useState("Choose Concrete Component");
-    const options = ['Delivery Vehicle', 'Packaging', 'Routes']
+    const [inputName, setInputName] = useState('');
     return (
 <div>
 
@@ -127,7 +131,17 @@ Enter URL:
         <hr style={{borderTop: '2px solid black'}}/>
         <br></br>
         
-      
+        {variants.map((item, index) => (
+        <div key={index}
+        style={{
+          border: '0.1px solid black',
+              padding: '2px',
+              margin: '2px',
+              fontWeight: 'bold',
+              fontSize: '15px'
+        }}>
+        {item}</div> // Create a new div for each item
+      ))}
       <div className="Big-Container" style={{ 
               border: '0.1px solid black',
               padding: '0px',
@@ -197,6 +211,19 @@ Enter URL:
                                 <Dropdown selected={select} setSelected={setSelected} />
                                 <Dropdown selected={select} setSelected={setSelected} />
                                 </div>
+              <div style={{ display: 'flex', justifyContent: 'flex-end'}}>
+              <input style={{
+                display: 'flex',
+                    marginLeft: 'auto',
+                    border: '0.1px solid black',
+                    padding: '5px',
+                    margin:'5px',
+              }}
+                type="text" 
+                value={inputName}
+                placeholder="Save Variant as:" 
+                onChange={e => setInputName(e.target.value)} // Update inputName when the input changes
+              />
                   <button style={{
                     margin: '5px',
                     padding: '5px',
@@ -205,13 +232,12 @@ Enter URL:
                     border: '0.1px solid black',
                     cursor: 'pointer',
                     borderRadius: '8px',
-                    display: 'flex',
-                    marginLeft: 'auto',
-                  }} onClick={handleSaveButtonClick}>
+                  }} 
+                  onClick={handleSaveButtonClick}>
                     Save variant
                   </button>
+            </div>
       </div>
-
 
 
 
