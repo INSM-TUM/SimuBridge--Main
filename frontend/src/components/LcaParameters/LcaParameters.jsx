@@ -43,9 +43,10 @@ const LcaParameters = () => {
           .catch((error) => {
             console.error('API Error:', error);
             // Handle errors as needed
-          });
-      };
-
+          })
+      });
+    }
+    
     const[select, setSelected] = useState("Choose Abstract Component");
     const[selectC, setSelectedC] = useState("Choose Concrete Component");
     const [inputName, setInputName] = useState('');
