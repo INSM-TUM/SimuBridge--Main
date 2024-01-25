@@ -3,8 +3,10 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faCaretDown } from '@fortawesome/free-solid-svg-icons'
 
 
-function Dropdown(){
+function Dropdown({select,setSelected}, options){
     const[isActive, setIsActive] = useState(false);
+    const abstractDrivers = ['Delivery Vehicle', 'Packaging', 'Routes', 'Filling Material']
+    //const abstractDrivers = options
 return (
 <div className="dropdown">
 <div className="dropdown-btn" 
@@ -17,12 +19,13 @@ tabIndex="0"
 </div>
     {isActive && ( 
         <div className="dropdown-content">  
-            <div className="dropdown-item">
-                React
-            </div> 
-            <div className="dropdown-item">
-                Angular
-            </div> 
+        {abstractDrivers.map((option) => (<div className="dropdown-item"
+            onClick={e => {
+            setSelected(option)
+            setIsActive(false)}
+            }>
+                {option}
+            </div> ))}
         </div>
     )}
    
