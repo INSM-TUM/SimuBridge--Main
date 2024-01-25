@@ -70,6 +70,7 @@ Fetch OpenLCA data
   border: '0.1px solid black', /* This will add a border */
   borderRadius: '8px', /* This will make the border round angled */
   padding: '0px', /* This will add some space between the border and the elements inside */
+  width:'40%',
 }}>
   <label
 style={{
@@ -92,6 +93,7 @@ Enter URL:
   <input
   style={{
     padding: '5px',
+    width:'70%',
   }}
     type="text"
     value={apiUrl}
