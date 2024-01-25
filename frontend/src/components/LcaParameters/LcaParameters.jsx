@@ -3,6 +3,7 @@ import { Flex, Heading, Card, CardHeader, CardBody, Text, Select, Stack, Button,
 import { FiChevronDown } from 'react-icons/fi';
 import Dropdown from './Dropdown';
 import "./styles.css"
+import { faRightFromBracket } from "@fortawesome/free-solid-svg-icons";
 
 const LcaParameters = () => {
     const [inputValue, setInputValue] = useState('');
@@ -41,9 +42,15 @@ const LcaParameters = () => {
         });
     };
 
+    const handleSaveButtonClick = () => {
+//Handles the button that saves the variant configuration
+      
+    };
+
+
     const[select, setSelected] = useState("Choose Abstract Component");
     const[selectC, setSelectedC] = useState("Choose Concrete Component");
-  
+    const options = ['Delivery Vehicle', 'Packaging', 'Routes']
     return (
 <div>
 
@@ -89,7 +96,7 @@ Enter URL:
     type="text"
     value={apiUrl}
     onChange={handleApiUrlChange}
-    placeholder="Enter API URL..."
+    placeholder="Enter OpenLCA API URL and host port..."
   />
 </div>
 
@@ -122,7 +129,8 @@ Enter URL:
       <div className="Big-Container" style={{ 
               border: '0.1px solid black',
               padding: '0px',
-              margin: '0px',}}>
+              margin: '0px',
+              }}>
                                 <div style={{  /* Here starts the first activity configuration */
                                                               display: 'flex', 
                                                               alignItems: 'center', 
@@ -135,8 +143,8 @@ Enter URL:
                                                     }}>
                                 Activity 1
                                         </label>
-                                <Dropdown selected={select} setSelected={setSelected} />
-                                <Dropdown selected={select} setSelected={setSelected} />
+                                <Dropdown selected={select} setSelected={setSelected}/>
+                                <Dropdown selected={selectC} setSelected={setSelectedC} />
                                 </div> 
 
                                 <div style={{  /* Here starts the second activity configuration */
@@ -187,6 +195,19 @@ Enter URL:
                                 <Dropdown selected={select} setSelected={setSelected} />
                                 <Dropdown selected={select} setSelected={setSelected} />
                                 </div>
+                  <button style={{
+                    margin: '5px',
+                    padding: '5px',
+                    fontWeight: 'bold',
+                    background: '#23b131',
+                    border: '0.1px solid black',
+                    cursor: 'pointer',
+                    borderRadius: '8px',
+                    display: 'flex',
+                    marginLeft: 'auto',
+                  }} onClick={handleSaveButtonClick}>
+                    Save variant
+                  </button>
       </div>
 
 
