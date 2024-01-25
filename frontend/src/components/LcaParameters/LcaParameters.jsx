@@ -3,54 +3,51 @@ import { Flex, Heading, Card, CardHeader, CardBody, Text, Select, Stack, Button,
 import { FiChevronDown } from 'react-icons/fi';
 import Dropdown from './Dropdown';
 import "./styles.css"
+import { faRightFromBracket } from "@fortawesome/free-solid-svg-icons";
 
 const LcaParameters = () => {
-  const [inputValue, setInputValue] = useState('');
-  const [apiUrl, setApiUrl] = useState('http://localhost:8080');
-  const impactMethodId = 'b4571628-4b7b-3e4f-81b1-9a8cca6cb3f8';
-
-  const handleInputChange = (event) => {
-    setInputValue(event.target.value);
-  };
-
-  const handleApiUrlChange = (event) => {
-    setApiUrl(event.target.value);
-  };
-
-  const handleButtonClick = () => {
-    // Make an API call using fetch
-    let resp = fetch(apiUrl, {
-      method: "POST",
-      body: JSON.stringify({
-        jsonrpc: "2.0",
-        id: 1,
-        method: "data/get/all",
-        params: {
-          "@type": "ProductSystem"
-        }
+    const [inputValue, setInputValue] = useState('');
+    const [apiUrl, setApiUrl] = useState('');
+    const impactMethodId = 'b4571628-4b7b-3e4f-81b1-9a8cca6cb3f8';
+  
+    const handleInputChange = (event) => {
+      setInputValue(event.target.value);
+    };
+  
+    const handleApiUrlChange = (event) => {
+      setApiUrl(event.target.value);
+    };
+  
+    const handleButtonClick = () => {
+      // Make an API call using fetch
+      fetch(apiUrl, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ data: inputValue }),
       })
-    })
-      .then((response) => {
-        if (!response.ok) {
-          throw new Error(`HTTP error! Status: ${response.status}`);
-        }
-        return response.json();
-      })
-      .then((data) => {
-        console.log('API Response:', data);
-        // Handle the response as needed
-      })
-      .catch((error) => {
-        console.error('API Error:', error);
-        // Handle errors as needed
-      });
-  };
+        .then((response) => {
+          if (!response.ok) {
+            throw new Error(`HTTP error! Status: ${response.status}`);
+          }
+          return response.json();
+        })
+        .then((data) => {
+          console.log('API Response:', data);
+          // Handle the response as needed
+        })
+        .catch((error) => {
+          console.error('API Error:', error);
+          // Handle errors as needed
+        });
+    };
 
-  const [select, setSelected] = useState("Choose Abstract Component");
-  const [selectC, setSelectedC] = useState("Choose Concrete Component");
-
-  return (
-    <div>
+    const[select, setSelected] = useState("Choose Abstract Component");
+    const[selectC, setSelectedC] = useState("Choose Concrete Component");
+    const [inputName, setInputName] = useState('');
+    return (
+<div>
 
 
       <label
@@ -120,30 +117,40 @@ const LcaParameters = () => {
       </div>
 
 
-      <hr style={{ borderTop: '2px solid black' }} />
-      <br></br>
-
-
-      <div className="Big-Container" style={{
-        border: '0.1px solid black',
-        padding: '0px',
-        margin: '0px',
-      }}>
-        <div style={{  /* Here starts the first activity configuration */
-          display: 'flex',
-          alignItems: 'center',
-          /* Here ends the first activity configuration */
+        <hr style={{borderTop: '2px solid black'}}/>
+        <br></br>
+        
+        {variants.map((item, index) => (
+        <div key={index}
+        style={{
+          border: '0.1px solid black',
+              padding: '2px',
+              margin: '2px',
+              fontWeight: 'bold',
+              fontSize: '15px'
         }}>
-          <label style={{
-            padding: '5px 10px',
-            fontSize: '15px',
-            fontWeight: 'bold',
-          }}>
-            Activity 1
-          </label>
-          <Dropdown selected={select} setSelected={setSelected} />
-          <Dropdown selected={select} setSelected={setSelected} />
-        </div>
+        {item}</div> // Create a new div for each item
+      ))}
+      <div className="Big-Container" style={{ 
+              border: '0.1px solid black',
+              padding: '0px',
+              margin: '0px',
+              }}>
+                                <div style={{  /* Here starts the first activity configuration */
+                                                              display: 'flex', 
+                                                              alignItems: 'center', 
+                                                              /* Here ends the first activity configuration */
+                                                          }}>
+                                        <label style={{
+                                                        padding: '5px 10px',
+                                                        fontSize: '15px',
+                                                        fontWeight: 'bold',
+                                                    }}>
+                                Activity 1
+                                        </label>
+                                <Dropdown selected={select} setSelected={setSelected}/>
+                                <Dropdown selected={selectC} setSelected={setSelectedC} />
+                                </div> 
 
         <div style={{  /* Here starts the second activity configuration */
           display: 'flex',
@@ -193,8 +200,48 @@ const LcaParameters = () => {
           <Dropdown selected={select} setSelected={setSelected} />
           <Dropdown selected={select} setSelected={setSelected} />
         </div>
+                                <div style={{  /* Here starts the fourth activity configuration */
+                                  display: 'flex', 
+                                  alignItems: 'center', 
+                                  /* Here ends the fourth activity configuration */
+                                }}>
+                                  <label style={{
+                                                        padding: '5px 10px',
+                                                        fontSize: '15px',
+                                                        fontWeight: 'bold',
+                                                    }}>
+                                Activity 4
+                                        </label>
+                                <Dropdown selected={select} setSelected={setSelected} />
+                                <Dropdown selected={select} setSelected={setSelected} />
+                                </div>
+              <div style={{ display: 'flex', justifyContent: 'flex-end'}}>
+              <input style={{
+                display: 'flex',
+                    marginLeft: 'auto',
+                    border: '0.1px solid black',
+                    padding: '5px',
+                    margin:'5px',
+              }}
+                type="text" 
+                value={inputName}
+                placeholder="Save Variant as:" 
+                onChange={e => setInputName(e.target.value)} // Update inputName when the input changes
+              />
+                  <button style={{
+                    margin: '5px',
+                    padding: '5px',
+                    fontWeight: 'bold',
+                    background: '#23b131',
+                    border: '0.1px solid black',
+                    cursor: 'pointer',
+                    borderRadius: '8px',
+                  }} 
+                  onClick={handleSaveButtonClick}>
+                    Save variant
+                  </button>
+            </div>
       </div>
-
 
 
 
