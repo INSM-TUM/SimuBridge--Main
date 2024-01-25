@@ -20,28 +20,31 @@ const LcaParameters = () => {
   
     const handleButtonClick = () => {
       // Make an API call using fetch
-      fetch(apiUrl, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ data: inputValue }),
-      })
-        .then((response) => {
-          if (!response.ok) {
-            throw new Error(`HTTP error! Status: ${response.status}`);
+      let resp = fetch(apiUrl, {
+        method: "POST",
+        body: JSON.stringify({
+          jsonrpc: "2.0",
+          id: 1,
+          method: "data/get/all",
+          params: {
+            "@type": "ProductSystem"
           }
-          return response.json();
         })
-        .then((data) => {
-          console.log('API Response:', data);
-          // Handle the response as needed
-        })
-        .catch((error) => {
-          console.error('API Error:', error);
-          // Handle errors as needed
-        });
-    };
+          .then((response) => {
+            if (!response.ok) {
+              throw new Error(`HTTP error! Status: ${response.status}`);
+            }
+            return response.json();
+          })
+          .then((data) => {
+            console.log('API Response:', data);
+            // Handle the response as needed
+          })
+          .catch((error) => {
+            console.error('API Error:', error);
+            // Handle errors as needed
+          });
+      };
 
     const[select, setSelected] = useState("Choose Abstract Component");
     const[selectC, setSelectedC] = useState("Choose Concrete Component");
