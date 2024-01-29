@@ -171,6 +171,7 @@ export const SimulationModelDescriptor = {
             "superClass": ["ModelElement"],
             "properties": [
                 { "name": "resources", "type": "String", "isMany": true },
+                { "name": "costDrivers", "type": "String", "isMany": true },
                 { "name": "cost", "type": "Real", "default": 0 },
                 { "name": "duration", "type": "TimeDistribution" }
             ]

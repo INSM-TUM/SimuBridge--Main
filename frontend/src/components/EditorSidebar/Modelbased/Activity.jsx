@@ -97,22 +97,22 @@ const Activity = ({ getData, currentElement }) => {
                 </FormControl>
               </AccordionPanel>
               <AccordionPanel pb={4}>
-                <Text>Abstract Cost Drivers:</Text>
+                <Text fontWeight="bold" fontSize="md">Abstract Cost Drivers:</Text>
 
                 {
-                  activityConfiguration.resources.map((resource, index) => {
+                  activityConfiguration.costDrivers.map((abstractCostDriver, index) => {
                     return <FormControl>
                       <FormLabel>Abstract Cost Driver { (index + 1 )}:</FormLabel>
                       <Flex gap='0' flexDirection='row'>
-                        <Select key={index} name="resource" value={resource} {...(!resource && {placeholder : 'Select abstract cost driver', color : 'red'})} onChange={(event) => handleResources(index,event.target.value )} bg="white">
-                          {getData().getCurrentScenario().resourceParameters.roles
-                              .filter(alternativeResource => !activityConfiguration.resources.includes(alternativeResource.id) || alternativeResource.id === resource)
+                        <Select key={index} name="abstractCostDriver" value={abstractCostDriver} {...(!abstractCostDriver && {placeholder : 'Select abstract cost driver', color : 'red'})} onChange={(event) => handleAbstractCostDrivers(index,event.target.value )} bg="white">
+                          {getData().getCurrentScenario().resourceParameters.costDrivers
+                              .filter(alternativeAbstractCostDriver => !activityConfiguration.costDrivers.includes(alternativeAbstractCostDriver.id) || alternativeAbstractCostDriver.id === abstractCostDriver)
                               .map(x =>{
                                 return  <option style={{ color: 'black' }} value={x.id} key={x.id}>{x.id}</option>
                               } )}
 
                         </Select>
-                        <IconButton icon={<CloseIcon />} onClick={() => removeResource(index)} />
+                        <IconButton icon={<CloseIcon />} onClick={() => removeAbstractCostDriver(index)} />
                       </Flex>
                     </FormControl>
                   })
@@ -120,8 +120,7 @@ const Activity = ({ getData, currentElement }) => {
                 }
 
                 <ButtonGroup size='md' isAttached variant="outline" >
-                  {/* <IconButton icon={<MinusIcon />} onClick={() => changeValueAmount(-1)} /> */}
-                  <IconButton icon={<AddIcon />} disabled={activityConfiguration.resources.filter(res => !res).length} onClick={() => addResource()} />
+                  <IconButton icon={<AddIcon />} disabled={activityConfiguration.costDrivers.filter(abstractCostDriver => !abstractCostDriver).length} onClick={() => addAbstractCostDriver()} />
                 </ButtonGroup>
               </AccordionPanel>
             </AccordionItem>
