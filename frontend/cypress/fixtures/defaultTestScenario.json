@@ -1,5 +1,4 @@
-{
-    "scenarioName": "PurchasingExample",
+{ "scenarioName": "PurchasingExample",
     "startingDate": "01-01-0000",
     "startingTime": "00:00",
     "numberOfInstances": 608,
@@ -934,7 +933,34 @@
                     }
                 ]
             }
-        ]
+        ],
+        "costDrivers": [
+            {
+                "id": "Delivery",
+                "concreteCostDrivers": [
+                    {
+                        "id": "Delivery",
+                        "cost": 0.5
+                    }
+                ]
+            }
+        ],
+        "costVariantConfig" : {
+            "count": "100",
+            "variants": [
+                {
+                    "id": "Shipment and delivery over distance A",
+                    "frequency": "0.2",
+                    "drivers": [
+                        {
+                            "id": "Delivery",
+                            "cost": "0.5"
+                        }
+
+                    ]
+                }
+            ]
+        }
     },
     "models": [
         {
@@ -947,6 +973,9 @@
                         "resources": [
                             "Role 3",
                             "Role 5"
+                        ],
+                        "costDrivers": [
+                            "Delivery"
                         ],
                         "cost": 0,
                         "duration": {

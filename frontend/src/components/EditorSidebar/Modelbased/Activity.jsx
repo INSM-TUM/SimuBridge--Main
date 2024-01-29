@@ -34,7 +34,10 @@ const Activity = ({ getData, currentElement }) => {
     activityConfiguration.resources = resources;
     save();
   }
-
+  function setAbstractCostDrivers(abstractCostDrivers) {
+    activityConfiguration.costDrivers = abstractCostDrivers;
+    save();
+  }
   function setDuration(duration) {
     activityConfiguration.duration = stateToDistribution(duration);
     save();
@@ -53,7 +56,18 @@ const Activity = ({ getData, currentElement }) => {
     activityConfiguration.resources[index] = value;
     setResources(activityConfiguration.resources.filter(resource => resource));
   }
+  const addAbstractCostDriver = () => {
+    setAbstractCostDrivers([...activityConfiguration.costDrivers.filter(abstractCostDriver => abstractCostDriver), undefined])
+  }
 
+  const removeAbstractCostDriver = (index) => {
+    setAbstractCostDrivers(activityConfiguration.costDrivers.filter((value, localIndex) => localIndex !== index))
+  }
+
+  const handleAbstractCostDrivers = (index, value) =>{
+    activityConfiguration.costDrivers[index] = value;
+    setAbstractCostDrivers(activityConfiguration.costDrivers.filter(abstractCostDriver => abstractCostDriver));
+  }
   return <AbstractModelElementEditor  {...{
     type : 'activities',
     typeName : 'Activity',
@@ -81,6 +95,34 @@ const Activity = ({ getData, currentElement }) => {
                   <FormLabel>Fix costs:</FormLabel>
                   <Input name="cost" type="input" value={activityConfiguration.cost} onChange={(event) => setCost(event.target.value)} bg="white"/> {/* TODO: Potentially also display the current money unit for the scenario */}
                 </FormControl>
+              </AccordionPanel>
+              <AccordionPanel pb={4}>
+                <Text>Abstract Cost Drivers:</Text>
+
+                {
+                  activityConfiguration.resources.map((resource, index) => {
+                    return <FormControl>
+                      <FormLabel>Abstract Cost Driver { (index + 1 )}:</FormLabel>
+                      <Flex gap='0' flexDirection='row'>
+                        <Select key={index} name="resource" value={resource} {...(!resource && {placeholder : 'Select abstract cost driver', color : 'red'})} onChange={(event) => handleResources(index,event.target.value )} bg="white">
+                          {getData().getCurrentScenario().resourceParameters.roles
+                              .filter(alternativeResource => !activityConfiguration.resources.includes(alternativeResource.id) || alternativeResource.id === resource)
+                              .map(x =>{
+                                return  <option style={{ color: 'black' }} value={x.id} key={x.id}>{x.id}</option>
+                              } )}
+
+                        </Select>
+                        <IconButton icon={<CloseIcon />} onClick={() => removeResource(index)} />
+                      </Flex>
+                    </FormControl>
+                  })
+
+                }
+
+                <ButtonGroup size='md' isAttached variant="outline" >
+                  {/* <IconButton icon={<MinusIcon />} onClick={() => changeValueAmount(-1)} /> */}
+                  <IconButton icon={<AddIcon />} disabled={activityConfiguration.resources.filter(res => !res).length} onClick={() => addResource()} />
+                </ButtonGroup>
               </AccordionPanel>
             </AccordionItem>
 

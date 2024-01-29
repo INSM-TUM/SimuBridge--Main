@@ -18,6 +18,7 @@ export default {
     createTimeTables: function (timeTables) {
         return timeTables.map(timeTable => createOneTimeTable(timeTable));
     },
+    // getting ACDs
     createAbstractCostDrivers: function (abstractCostDrivers) {
         return abstractCostDrivers.map(abstractCostDriver => createOneAbstractCostDriver(abstractCostDriver));
     },

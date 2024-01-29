@@ -102,6 +102,43 @@ export const SimulationModelDescriptor = {
             ]
         },
 
+        {
+            "name" : "AbstractCostDriver",
+            "properties": [
+                { "name": "id", "type": "String"}, //TODO check if defaultTime unit is to be included
+                { "name": "concreteCostDrivers", "type": "ConcreteCostDriver", isMany : true }, // TODO concreteCostDriver is missplelled in the xml files provided from team B.
+            ]
+        },
+
+        {
+            "name" : "ConcreteCostDriver",
+            "properties": [
+                { "name": "id", "type": "String"},
+                { "name": "cost", "type": "String"},
+            ]
+        },
+        {
+            "name" : "CostVariantConfig",
+            "properties": [
+                { "name": "count", "type": "String"},
+                { "name": "variants", "type": "Variant", isMany : true }
+            ]
+        },
+        {
+            "name" : "Variant",
+            "properties": [
+                { "name": "id", "type": "String"},
+                { "name": "frequency", "type": "String"},
+                { "name": "drivers", "type": "Driver", isMany : true }
+            ]
+        },
+        {
+            "name" : "Driver",
+            "properties": [
+                { "name": "id", "type": "String"},
+                { "name": "cost", "type": "String"},
+            ]
+        },
 
         {
             "name": "Model",
