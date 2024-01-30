@@ -125,7 +125,7 @@ const LcaParameters = () => {
         <hr style={{borderTop: '2px solid black'}}/>
         <br></br>
         
-        {variants.map((item, index) => (
+        {/*variants.map((item, index) => (
         <div key={index}
         style={{
           border: '0.1px solid black',
@@ -135,7 +135,8 @@ const LcaParameters = () => {
               fontSize: '15px'
         }}>
         {item}</div> // Create a new div for each item
-      ))}
+      ))*/
+      }
 
       <div className="Big-Container" style={{ 
               border: '0.1px solid black',
@@ -243,7 +244,7 @@ const LcaParameters = () => {
                     cursor: 'pointer',
                     borderRadius: '8px',
                   }} 
-                   onClick={handleSaveButtonClick}
+                  //  onClick={handleSaveButtonClick}
                   >
                     Save variant
                   </button>
