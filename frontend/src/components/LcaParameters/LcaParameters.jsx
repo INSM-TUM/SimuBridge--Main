@@ -30,22 +30,23 @@ const LcaParameters = () => {
             "@type": "ProductSystem"
           }
         })
-          .then((response) => {
-            if (!response.ok) {
-              throw new Error(`HTTP error! Status: ${response.status}`);
-            }
-            return response.json();
-          })
-          .then((data) => {
-            console.log('API Response:', data);
-            // Handle the response as needed
-          })
-          .catch((error) => {
-            console.error('API Error:', error);
-            // Handle errors as needed
-          })
-      });
-    }
+      })
+        .then((response) => {
+          if (!response.ok) {
+            throw new Error(`HTTP error! Status: ${response.status}`);
+          }
+          return response.json();
+        })
+        .then((data) => {
+          console.log('API Response:', data);
+          // Handle the response as needed
+        })
+        .catch((error) => {
+          console.error('API Error:', error);
+          // Handle errors as needed
+        });
+    };
+    
     
     const[select, setSelected] = useState("Choose Abstract Component");
     const[selectC, setSelectedC] = useState("Choose Concrete Component");
@@ -135,6 +136,7 @@ const LcaParameters = () => {
         }}>
         {item}</div> // Create a new div for each item
       ))}
+
       <div className="Big-Container" style={{ 
               border: '0.1px solid black',
               padding: '0px',
@@ -241,7 +243,8 @@ const LcaParameters = () => {
                     cursor: 'pointer',
                     borderRadius: '8px',
                   }} 
-                  onClick={handleSaveButtonClick}>
+                   onClick={handleSaveButtonClick}
+                  >
                     Save variant
                   </button>
             </div>
