@@ -1,9 +1,9 @@
-
 import {convertScenario} from "../../../scyllaConverter/ConvertScenario.js"
 //import * as defaultTestScenarioWithCostDriversJson from "../fixtures/defaultTestScenarioWithCostDrivers.json?type=module";
 
 const scenarioDataWithCostVariants =
-    { "scenarioName": "PurchasingExample",
+    {
+        "scenarioName": "PurchasingExample",
         "startingDate": "01-01-0000",
         "startingTime": "00:00",
         "numberOfInstances": 608,
@@ -954,7 +954,7 @@ const scenarioDataWithCostVariants =
                     ]
                 }
             ],
-            "costVariantConfig" : {
+            "costVariantConfig": {
                 "count": "100",
                 "variants": [
                     {
@@ -1461,7 +1461,7 @@ const scenarioDataWithCostVariants =
         ]
     }
 // Logistics Scenario from BPMN of oLCA dataset:
-const logisticsScenario =   {
+const logisticsScenario = {
     "scenarioName": "logisticsScenario",
     "startingDate": "01-01-0000",
     "startingTime": "00:00",
@@ -1481,6 +1481,46 @@ const logisticsScenario =   {
                     }
                 ]
             },
+            {
+                "id": "Filling Material",
+                "concreteCostDrivers": [
+                    {
+                        "id": "Filling A",
+                        "cost": 0.0000146
+                    }
+                ]
+            },
+            {
+                "id": "Packaging Material",
+                "concreteCostDrivers": [
+                    {
+                        "id": "Packaging Material B",
+                        "cost": 0.00003806
+                    }
+                ]
+            },
+            {
+                "id": "Re-Routing",
+                "concreteCostDrivers": [
+                    {
+                        "id": "Re-Routing A Lorry",
+                        "cost": 0.000008529
+                    },
+                    {
+                        "id": "Re-Routing A Small Lorry",
+                        "cost": 0.00001105
+                    },
+                ]
+            },
+            {
+                "id": "Receipt",
+                "concreteCostDrivers": [
+                    {
+                        "id": "Receipt",
+                        "cost": 0.00001153
+                    }
+                ]
+            },
 
             {
                 "id": "Shipment",
@@ -1488,12 +1528,51 @@ const logisticsScenario =   {
                     {
                         "id": "Shipment A Lorry",
                         "cost": 0.00007839
-                    }
+                    },
+                    {
+                        "id": "Shipment A Rail Electric",
+                        "cost": 0.0000000253
+                    },
                 ]
-            }
+            },
+
         ],
         "costVariantConfig": {
-            "variants": []
+            "count": "100",
+            "variants": [
+                {
+                    "id": "Shipment and delivery over distance A",
+                    "frequency": "0.2",
+                    "drivers": [
+                        {
+                            "id": "Delivery",
+                            "cost": "0.00002843"
+                        },
+                        {
+                            "id": "Filling Material",
+                            "cost": "0.00001468"
+                        },
+                        {
+                            "id": "Packaging Material",
+                            "cost": "0.00003806"
+                        },
+                        {
+                            "id": "Re-Routing",
+                            "cost": "0.000008529"
+                        },
+                        {
+                            "id": "Receipt",
+                            "cost": "0.00001153"
+                        },
+                        {
+                            "id": "Shipment",
+                            "cost": "0.00007839"
+                        },
+
+
+                    ]
+                }
+            ]
         }
     },
     "models": [
@@ -1506,7 +1585,8 @@ const logisticsScenario =   {
                         "id": "Activity_0e1w0fd",
                         "resources": [],
                         "costDrivers": [
-                            null
+                            "Packaging Material",
+                            "Filling Material"
                         ],
                         "cost": 0,
                         "duration": {
