@@ -944,8 +944,12 @@ const scenarioDataWithCostVariants =
                     "id": "Delivery",
                     "concreteCostDrivers": [
                         {
-                            "id": "Delivery",
-                            "cost": 0.5
+                            "id": "Delivery A Lorry",
+                            "cost": 0.00002843
+                        },
+                        {
+                            "id": "Filling Material",
+                            "cost": 0.00001468
                         }
                     ]
                 }
@@ -959,7 +963,12 @@ const scenarioDataWithCostVariants =
                         "drivers": [
                             {
                                 "id": "Delivery",
-                                "cost": "0.5"
+                                "cost": "0.00002843"
+                            },
+                            {
+                                "id": "Filling Material",
+                                "cost": "0.00001468"
+
                             }
 
                         ]
@@ -1024,6 +1033,10 @@ const scenarioDataWithCostVariants =
                             "resources": [
                                 "Role 4"
                             ],
+                            "costDrivers": [
+                                "Filling Material"
+                            ],
+
                             "cost": 0,
                             "duration": {
                                 "distributionType": "normal",
@@ -1464,7 +1477,7 @@ const logisticsScenario =   {
                 "concreteCostDrivers": [
                     {
                         "id": "Delivery A Lorry",
-                        "cost": 0.5
+                        "cost": 0.00002843
                     }
                 ]
             },
@@ -1474,7 +1487,7 @@ const logisticsScenario =   {
                 "concreteCostDrivers": [
                     {
                         "id": "Shipment A Lorry",
-                        "cost": 0.5
+                        "cost": 0.00007839
                     }
                 ]
             }

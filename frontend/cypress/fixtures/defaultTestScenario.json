@@ -939,8 +939,12 @@
                 "id": "Delivery",
                 "concreteCostDrivers": [
                     {
-                        "id": "Delivery",
-                        "cost": 0.5
+                        "id": "Delivery A Lorry",
+                        "cost": 0.00002843
+                    },
+                    {
+                        "id": "Filling Material",
+                        "cost": 0.00001468
                     }
                 ]
             }
@@ -954,7 +958,12 @@
                     "drivers": [
                         {
                             "id": "Delivery",
-                            "cost": "0.5"
+                            "cost": "0.00002843"
+                        },
+                        {
+                            "id": "Filling Material",
+                            "cost": "0.00001468"
+
                         }
 
                     ]
@@ -1019,6 +1028,10 @@
                         "resources": [
                             "Role 4"
                         ],
+                        "costDrivers": [
+                            "Filling Material"
+                        ],
+
                         "cost": 0,
                         "duration": {
                             "distributionType": "normal",
