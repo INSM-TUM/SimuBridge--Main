@@ -14,7 +14,7 @@ onClick={ e=> setIsActive(!isActive)}
 onBlur={() => setIsActive(false)}
 tabIndex="0"
 >
- {selected}
+ {selected} 
  <FontAwesomeIcon icon={faCaretDown} />
 </div>
     {isActive && ( 

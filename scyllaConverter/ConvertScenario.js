@@ -1,6 +1,6 @@
 // Fix error "Buffer is not defined" from xml-js; https://ethereum.stackexchange.com/questions/140178/referenceerror-buffer-is-not-defined
 import { Buffer } from 'buffer';
-window.Buffer = window.Buffer || Buffer;
+//window.Buffer = window.Buffer || Buffer;
 
 import { json2xml } from 'xml-js';
 import createNewJsonGlob from './GlobConfig.js';
