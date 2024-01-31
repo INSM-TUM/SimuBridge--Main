@@ -44,17 +44,20 @@ const LcaParameters = () => {
 
     const [variants, setMyVariants] = useState([]);
     const [myConfig, setMyConfig] = useState('');
+    const inputNameRef = useRef('');
+
     const handleSaveButtonClick = () => {
 //Handles the button that saves the variant configuration
-    //const newConfig = 'New Configuration';
-    setMyConfig(inputName);
-    setMyVariants(prevVariants => [...prevVariants, myConfig]);
-    };
+
+    const currentConfig = inputNameRef.current.value;
+    if (currentConfig !== '') {
+    setMyVariants(prevVariants => [...prevVariants, currentConfig]);
+    inputNameRef.current.value = '';
+    }};
 
 
-    const[select, setSelected] = useState("Choose Abstract Component");
-    const[selectC, setSelectedC] = useState("Choose Concrete Component");
-    const [inputName, setInputName] = useState('');
+    const[selected, setSelected] = useState("Choose Abstract Component");
+    const[selectedC, setSelectedC] = useState("Choose Concrete Component");
     return (
 <div>
 
@@ -159,8 +162,8 @@ Enter URL:
                                                     }}>
                                 Activity 1
                                         </label>
-                                <Dropdown selected={select} setSelected={setSelected}/>
-                                <Dropdown selected={selectC} setSelected={setSelectedC} />
+                                <Dropdown selected={selected} setSelected={setSelected}/>
+                                <Dropdown selected={selectedC} setSelected={setSelectedC} />
                                 </div> 
 
                                 <div style={{  /* Here starts the second activity configuration */
@@ -176,8 +179,8 @@ Enter URL:
                                                     }}>
                                 Activity 2
                                         </label>
-                                <Dropdown selected={select} setSelected={setSelected} />
-                                <Dropdown selected={select} setSelected={setSelected} />
+                                <Dropdown selected={selected} setSelected={setSelected} />
+                                <Dropdown selected={selectedC} setSelected={setSelectedC} />
                                 </div>
 
                                 <div style={{  /* Here starts the third activity configuration */
@@ -192,8 +195,8 @@ Enter URL:
                                                     }}>
                                 Activity 3
                                         </label>
-                                <Dropdown selected={select} setSelected={setSelected} />
-                                <Dropdown selected={select} setSelected={setSelected} />
+                                <Dropdown selected={selected} setSelected={setSelected} />
+                                <Dropdown selected={selectedC} setSelected={setSelectedC} />
                                 </div>
 
                                 <div style={{  /* Here starts the fourth activity configuration */
@@ -208,8 +211,8 @@ Enter URL:
                                                     }}>
                                 Activity 4
                                         </label>
-                                <Dropdown selected={select} setSelected={setSelected} />
-                                <Dropdown selected={select} setSelected={setSelected} />
+                                <Dropdown selected={selected} setSelected={setSelected} />
+                                <Dropdown selected={selectedC} setSelected={setSelectedC} />
                                 </div>
               <div style={{ display: 'flex', justifyContent: 'flex-end'}}>
               <input style={{
@@ -220,9 +223,8 @@ Enter URL:
                     margin:'5px',
               }}
                 type="text" 
-                value={inputName}
                 placeholder="Save Variant as:" 
-                onChange={e => setInputName(e.target.value)} // Update inputName when the input changes
+                ref={inputNameRef} // Update inputName when the input changes
               />
                   <button style={{
                     margin: '5px',
