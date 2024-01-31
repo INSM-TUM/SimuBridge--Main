@@ -137,7 +137,7 @@ const LcaParameters = () => {
         <hr style={{borderTop: '2px solid black'}}/>
         <br></br>
         
-        {/*variants.map((item, index) => (
+        {variants.map((item, index) => (
         <div key={index}
         style={{
           border: '0.1px solid black',
@@ -147,7 +147,7 @@ const LcaParameters = () => {
               fontSize: '15px'
         }}>
         {item}</div> // Create a new div for each item
-      ))*/
+      ))
       }
 
       <div className="Big-Container" style={{ 
@@ -184,8 +184,8 @@ const LcaParameters = () => {
           }}>
             Activity 2
           </label>
-          <Dropdown selected={select} setSelected={setSelected} />
-          <Dropdown selected={select} setSelected={setSelected} />
+          <Dropdown selected={selected} setSelected={setSelected} />
+          <Dropdown selected={selected} setSelected={setSelected} />
         </div>
 
         <div style={{  /* Here starts the third activity configuration */
@@ -216,8 +216,8 @@ const LcaParameters = () => {
           }}>
             Activity 4
           </label>
-          <Dropdown selected={select} setSelected={setSelected} />
-          <Dropdown selected={select} setSelected={setSelected} />
+          <Dropdown selected={selected} setSelected={setSelected} />
+          <Dropdown selected={selected} setSelected={setSelected} />
         </div>
               <div style={{ display: 'flex', justifyContent: 'flex-end'}}>
               <input style={{
@@ -240,7 +240,7 @@ const LcaParameters = () => {
                     cursor: 'pointer',
                     borderRadius: '8px',
                   }} 
-                  //  onClick={handleSaveButtonClick}
+                    onClick={handleSaveButtonClick}
                   >
                     Save variant
                   </button>
