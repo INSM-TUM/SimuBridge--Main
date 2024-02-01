@@ -106,6 +106,7 @@ export const SimulationModelDescriptor = {
             "name" : "AbstractCostDriver",
             "properties": [
                 { "name": "id", "type": "String"}, //TODO check if defaultTime unit is to be included
+                { "name": "name", "type": "String"},
                 { "name": "concreteCostDrivers", "type": "ConcreteCostDriver", isMany : true }, // TODO concreteCostDriver is missplelled in the xml files provided from team B.
             ]
         },
@@ -114,6 +115,7 @@ export const SimulationModelDescriptor = {
             "name" : "ConcreteCostDriver",
             "properties": [
                 { "name": "id", "type": "String"},
+                { "name": "name", "type": "String"},
                 { "name": "cost", "type": "String"},
             ]
         },
