@@ -2,29 +2,21 @@ import React, { useState } from 'react';
 import {
   Alert, AlertIcon, AlertDescription, CloseButton, useDisclosure,
   Accordion, AccordionItem, AccordionButton, AccordionPanel, AccordionIcon,
-  Flex, Stack,
-  Heading,
-  Card, CardHeader, CardBody,
-  Text,
+  Flex, Stack, Heading, Card, CardHeader, CardBody, Text,
   Input, InputGroup, InputRightElement, InputLeftElement,
   NumberInput, NumberInputField, NumberInputStepper, NumberIncrementStepper, NumberDecrementStepper,
-  Select, Button,
-  Progress,
-  Box,
-  Spinner,
-  useToast,
-  UnorderedList, ListItem
+  Select, Button, Progress, Box, Spinner, useToast, UnorderedList, ListItem
 } from '@chakra-ui/react';
 
-export default function VariantEditor({costVariant, bpmnActivities, allCostDrivers, saveCostVariant}) {
+export default function VariantEditor({ costVariant, bpmnActivities, allCostDrivers, saveCostVariant }) {
   const [taskDriverMapping, setTaskDriverMapping] = useState([]);
 
   const addNewTaskDriverMapping = () => {
-    setTaskDriverMapping([...taskDriverMapping, { task: null, category: null, driver: null }]);
+    setTaskDriverMapping([...taskDriverMapping, { task: null, abstractDriver: null, concreteDriver: null }]);
   };
 
-  // Get unique categories from allCostDrivers
-  const categories = Array.from(new Set(allCostDrivers.map(driver => driver.category)));
+  // Extract unique abstract driver names from allCostDrivers
+  const abstractDriverNames = Array.from(new Set(allCostDrivers.map(driver => driver.name)));
 
   return (
     <Card my={2}>
@@ -33,7 +25,8 @@ export default function VariantEditor({costVariant, bpmnActivities, allCostDrive
       </CardHeader>
       <CardBody>
         <Stack>
-          <Flex>
+          <Text>Please specify variant name and frequency</Text>
+          <Flex mt={2}>
             <Input placeholder="Variant Name" value={costVariant.id} />
             <NumberInput placeholder="Frequency"
               value={costVariant.frequency}
@@ -67,37 +60,39 @@ export default function VariantEditor({costVariant, bpmnActivities, allCostDrive
                   <option value={activity.id} key={activity.id}>{activity.name}</option>
                 ))}
               </Select>
-              <Select placeholder="Select Category" value={mapping.category} onChange={(e) => {
-                const newMapping = { ...mapping, category: e.target.value, driver: null };
+              <Select placeholder="Select Abstract Driver" value={mapping.abstractDriver} onChange={(e) => {
+                const newMapping = { ...mapping, abstractDriver: e.target.value, concreteDriver: null };
                 setTaskDriverMapping(taskDriverMapping.map((m, idx) => idx === index ? newMapping : m));
               }} mr={3}>
-                {categories.map((category) => (
-                  <option value={category} key={category}>{category}</option>
+                {abstractDriverNames.map(name => (
+                  <option value={name} key={name}>{name}</option>
                 ))}
               </Select>
-              <Select placeholder="Select Driver" value={mapping.driver} onChange={(e) => {
-                const newMapping = { ...mapping, driver: e.target.value };
+              <Select placeholder="Select Concrete Driver" value={mapping.concreteDriver} onChange={(e) => {
+                const newMapping = { ...mapping, concreteDriver: e.target.value };
                 setTaskDriverMapping(taskDriverMapping.map((m, idx) => idx === index ? newMapping : m));
               }}>
-                {allCostDrivers.filter(driver => driver.category === mapping.category).map((driver) => (
-                  <option value={driver.id} key={driver.id}>{driver.name}</option>
-                ))}
+                {allCostDrivers
+                  .find(driver => driver.name === mapping.abstractDriver)?.concreteCostDrivers
+                  .map(concreteDriver => (
+                    <option value={concreteDriver.id} key={concreteDriver.id}>{concreteDriver.name}</option>
+                  ))}
               </Select>
             </Flex>
           ))}
+          <Button
+            onClick={addNewTaskDriverMapping}
+            colorScheme='white'
+            variant='outline'
+            border='1px'
+            borderColor='#B4C7C9'
+            color='#6E6E6F'
+            _hover={{ bg: '#B4C7C9' }}
+            mt={2}
+          >
+            Add mapping to OpenLCA cost driver
+          </Button>
         </Stack>
-        <Button
-          onClick={addNewTaskDriverMapping}
-          colorScheme='white'
-          variant='outline'
-          border='1px'
-          borderColor='#B4C7C9'
-          color='#6E6E6F'
-          _hover={{ bg: '#B4C7C9' }}
-          mt={2}
-        >
-          Add mapping to OpenLCA cost driver
-        </Button>
       </CardBody>
     </Card>
   );
