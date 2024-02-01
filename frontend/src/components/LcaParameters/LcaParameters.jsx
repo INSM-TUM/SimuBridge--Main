@@ -108,9 +108,25 @@ const LcaParameters = () => {
     }
   };
 
+    const removeItem = (indexToRemove) => {
+      setMyVariants(variants.filter((_, index) => index !== indexToRemove));
+    };
 
   const [selected, setSelected] = useState("Choose Abstract Component");
   const [selectedC, setSelectedC] = useState("Choose Concrete Component");
+
+    //Functionality for adding in activity array
+    const [activities, setActivities] = useState([1]);
+    const addActivity = () => {
+      const newActivity = {/* new activity object */};
+      setActivities([...activities, newActivity]);
+    };
+
+    //Functionality for removing from activity array
+    const removeActivity = (indexToRemove) => {
+      setActivities(prevActivities => prevActivities.filter((_, index) => index !== indexToRemove));
+    };
+
   return (
     <Box>
       <Card bg="white" mt="25px">
@@ -162,112 +178,136 @@ const LcaParameters = () => {
 
       {variants.map((item, index) => (
         <div key={index}
-          style={{
-            border: '0.1px solid black',
-            padding: '2px',
-            margin: '2px',
-            fontWeight: 'bold',
-            fontSize: '15px'
-          }}>
-          {item}</div> // Create a new div for each item
+        style={{
+              border: '0.1px solid black',
+              padding: '2px',
+              margin: '2px',
+              fontWeight: 'bold',
+              fontSize: '15px',
+              display: 'flex',
+              justifyContent:'space-between',
+        }}>
+        {item}
+        <button
+        style={{
+          cursor: 'pointer',
+          width: '30px', // Set width to make the button square
+          height: '30px', // Set height to make the button square
+          justifyContent: 'center', // Center 'x' horizontally
+          alignItems: 'center', // Center 'x' vertically
+          fontWeight: 'bold',
+          fontSize: '15px',
+          margin: '2px',
+          marginLeft: 'auto',
+          border: '0.1px solid black',
+          backgroundColor: '#FF0800',
+          color: '#FFFFFF',
+          boxShadow: '2px 2px 5px rgba(0, 0, 0, 0.5)',
+          transition: 'background-color 0.3s',
+
+        }} 
+        onClick={
+          () => removeItem(index)}
+          // Add :hover styles
+      onMouseEnter={(e) => e.target.style.backgroundColor = '#8B0000'}
+      onMouseLeave={(e) => e.target.style.backgroundColor = '#FF0800'}>
+          x
+          </button>
+        </div> // Create a new div for each item
       ))
       }
 
-      <div className="Big-Container" style={{
-        border: '0.1px solid black',
-        padding: '0px',
-        margin: '0px',
-      }}>
-        <div style={{  /* Here starts the first activity configuration */
-          display: 'flex',
-          alignItems: 'center',
-          /* Here ends the first activity configuration */
-        }}>
-          <label style={{
-            padding: '5px 10px',
-            fontSize: '15px',
-            fontWeight: 'bold',
-          }}>
-            Activity 1
+      <div className="Big-Container" style={{ 
+              border: '0.1px solid black',
+              padding: '0px',
+              margin: '0px',
+              }}>
+
+      {/* This adds an extra activity based on the users preference*/}
+
+        {activities.map((activity, index) => (
+        <div key={index} style={{ display: 'flex', alignItems: 'center' }}>
+          <label style={{ padding: '5px 10px', fontSize: '15px', fontWeight: 'bold' }}>
+            Activity {index + 1}
           </label>
           <Dropdown selected={selected} setSelected={setSelected} />
           <Dropdown selected={selectedC} setSelected={setSelectedC} />
-        </div>
 
-        <div style={{  /* Here starts the second activity configuration */
-          display: 'flex',
-          alignItems: 'center',
-          /* Here ends the second activity configuration */
+{/* This adds a button that adds an activity*/}
 
-        }}>
-          <label style={{
-            padding: '5px 10px',
-            fontSize: '15px',
+          <button style={{ 
+            marginLeft: 'auto', 
+            visibility: index === activities.length - 1 ? 'visible' : 'hidden', 
             fontWeight: 'bold',
-          }}>
-            Activity 2
-          </label>
-          <Dropdown selected={selected} setSelected={setSelected} />
-          <Dropdown selected={selected} setSelected={setSelected} />
-        </div>
+            backgroundColor: '#FFFFFF',
+            boxShadow: '0px 0px 5px 2px rgba(0,0,0,0.1)',
+            width: '30px', 
+            height: '30px', 
+            justifyContent: 'center', // Center '+' horizontally
+            alignItems: 'center', // Center '+' vertically
+            transition: 'background-color 0.3s',
+            }} 
 
-        <div style={{  /* Here starts the third activity configuration */
-          display: 'flex',
-          alignItems: 'center',
-          /* Here ends the third activity configuration */
-        }}>
-          <label style={{
-            padding: '5px 10px',
-            fontSize: '15px',
-            fontWeight: 'bold',
-          }}>
-            Activity 3
-          </label>
-          <Dropdown selected={selected} setSelected={setSelected} />
-          <Dropdown selected={selectedC} setSelected={setSelectedC} />
-        </div>
+            onClick={addActivity}
+            onMouseEnter={(e) => e.target.style.backgroundColor = '#808080'}
+            onMouseLeave={(e) => e.target.style.backgroundColor = '#FFFFFF'}>
+            +
+            </button>
+{/* This adds a button that removes an activity*/}
 
-        <div style={{  /* Here starts the fourth activity configuration */
-          display: 'flex',
-          alignItems: 'center',
-          /* Here ends the fourth activity configuration */
-        }}>
-          <label style={{
-            padding: '5px 10px',
-            fontSize: '15px',
-            fontWeight: 'bold',
-          }}>
-            Activity 4
-          </label>
-          <Dropdown selected={selected} setSelected={setSelected} />
-          <Dropdown selected={selected} setSelected={setSelected} />
+            {activities.length > 1 && <button 
+            style={{ 
+              marginLeft: '10px', 
+              marginRight: '10px',
+              padding: '5px',
+              fontWeight: 'bold',
+              width: '30px', 
+              height: '30px',
+              justifyContent: 'center', // Center '-' horizontally
+              alignItems: 'center', // Center '-' vertically
+              backgroundColor: '#FFFFFF',
+              boxShadow: '0px 0px 5px 2px rgba(0,0,0,0.1)',
+              transition: 'background-color 0.3s',
+            }} 
+            onClick={() => removeActivity(index)}
+            onMouseEnter={(e) => e.target.style.backgroundColor = '#FF0800'}
+            onMouseLeave={(e) => e.target.style.backgroundColor = '#FFFFFF'}>
+            -
+          </button>}
         </div>
-        <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-          <input style={{
-            display: 'flex',
-            marginLeft: 'auto',
-            border: '0.1px solid black',
-            padding: '5px',
-            margin: '5px',
-          }}
-            type="text"
-            placeholder="Save Variant as:"
-            ref={inputNameRef} // Update inputName when the input changes
-          />
-          <button style={{
-            margin: '5px',
-            padding: '5px',
-            fontWeight: 'bold',
-            background: '#23b131',
-            border: '0.1px solid black',
-            cursor: 'pointer',
-            borderRadius: '8px',
-          }}
-            onClick={handleSaveButtonClick}
-          >
-            Save variant
-          </button>
-        </div>
+      ))}
+
+      {/* Code for extra activity ends here*/}
+
+              <div style={{ display: 'flex', justifyContent: 'flex-end'}}>
+              <input style={{
+                display: 'flex',
+                    marginLeft: 'auto',
+                    border: '0.1px solid black',
+                    padding: '5px',
+                    margin:'5px',
+              }}
+                type="text" 
+                placeholder="Save Variant as:" 
+                ref={inputNameRef} // Update inputName when the input changes
+              />
+                  <button style={{
+                    margin: '5px',
+                    padding: '5px',
+                    fontWeight: 'bold',
+                    background: '#45CEA2',
+                    border: '0.1px solid black',
+                    cursor: 'pointer',
+                    borderRadius: '8px',
+                    transition: 'background-color 0.3s',
+                  }} 
+                    onClick={handleSaveButtonClick}
+                    onMouseEnter={(e) => e.target.style.backgroundColor = '#50C878'}
+                    onMouseLeave={(e) => e.target.style.backgroundColor = '#45CEA2'}
+                  >
+                    Save variant
+                  </button>
+            </div>
       </div>
 
 
