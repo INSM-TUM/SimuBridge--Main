@@ -126,8 +126,8 @@ const LcaParameters = ({ getData }) => {
         let abstractDriver = abstractCostDrivers.find(driver => driver.name === el.abstractDriverName);
         if (!abstractDriver) {
             abstractDriver = SimulationModelModdle.getInstance().create("simulationmodel:AbstractCostDriver", {
-                id: el['@type'],
-                name: el['@type'],
+                id: el.category,
+                name: el.category,
                 concreteCostDrivers: [concreteCostDriverConfig]
             });
             abstractCostDrivers.push(abstractDriver);

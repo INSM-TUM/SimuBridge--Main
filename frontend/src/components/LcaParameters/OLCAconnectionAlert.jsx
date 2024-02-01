@@ -13,7 +13,7 @@ export default function OLCAconnectionAlert({ countCostDrivers }) {
         <Alert status='success' mt={2} display='flex' alignItems='center' justifyContent='space-between'>
             <Flex alignItems='center'>
                 <AlertIcon />
-                <AlertDescription>{countCostDrivers} cost drivers loaded</AlertDescription>
+                <AlertDescription>{countCostDrivers} abstract cost drivers loaded</AlertDescription>
             </Flex>
             <CloseButton position='relative' onClick={onClose} />
         </Alert>
