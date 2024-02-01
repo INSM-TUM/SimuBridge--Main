@@ -60,6 +60,7 @@ export const SimulationModelDescriptor = {
                 { "name": "resources", "type": "Resource", isMany : true },
                 { "name": "timeTables", "type": "Timetable", isMany : true },
                 { "name": "costDrivers", "type": "AbstractCostDriver", isMany : true },
+                { "name": "environmentalCostDrivers", "type": "ConcreteCostDriver", isMany : true},
                 { "name": "costVariantConfig", "type": "CostVariantConfig" }
             ]
         },
@@ -79,7 +80,7 @@ export const SimulationModelDescriptor = {
             "properties": [
                 { "name": "id", "type": "String"},
                 { "name": "schedule", "type": "String", default : null }, //TODO could be done with isReference and type Timetable
-                { "name": "costHour", "type": "Real", default : null },
+                { "name": "costHour", "type": "Real", default : null }
             ]
         },
 
@@ -116,7 +117,7 @@ export const SimulationModelDescriptor = {
             "properties": [
                 { "name": "id", "type": "String"},
                 { "name": "name", "type": "String"},
-                { "name": "cost", "type": "String"},
+                { "name": "cost", "type": "Integer"},
                 { "name": "unit", "type": "TargetUnit"},
             ]
         },
