@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
   Alert, AlertIcon, AlertDescription, CloseButton, useDisclosure,
   Accordion, AccordionItem, AccordionButton, AccordionPanel, AccordionIcon,
@@ -20,13 +20,11 @@ export default function VariantEditor({costVariant, bpmnActivities, allCostDrive
   const [taskDriverMapping, setTaskDriverMapping] = useState([]);
 
   const addNewTaskDriverMapping = () => {
-    setTaskDriverMapping([...taskDriverMapping, { task: null, driver: null }]);
+    setTaskDriverMapping([...taskDriverMapping, { task: null, category: null, driver: null }]);
   };
 
-  // Function to check if an activity is already selected in another mapping
-  const isActivitySelected = (activityId) => {
-    return taskDriverMapping.some(mapping => mapping.task === activityId);
-  };
+  // Get unique categories from allCostDrivers
+  const categories = Array.from(new Set(allCostDrivers.map(driver => driver.category)));
 
   return (
     <Card my={2}>
@@ -59,22 +57,29 @@ export default function VariantEditor({costVariant, bpmnActivities, allCostDrive
             >Save</Button>
           </Flex>
           {taskDriverMapping.map((mapping, index) => (
-            <Flex key={index} mt={3}>
+            <Flex key={index} mt={3} alignItems="center">
+              <Text mr={3}>{index + 1}.</Text>
               <Select placeholder="Select Task" value={mapping.task} onChange={(e) => {
                 const newMapping = { ...mapping, task: e.target.value };
                 setTaskDriverMapping(taskDriverMapping.map((m, idx) => idx === index ? newMapping : m));
               }} mr={3}>
                 {bpmnActivities.map((activity) => (
-                  <option value={activity.id} key={activity.id} disabled={isActivitySelected(activity.id)}>
-                    {activity.name}
-                  </option>
+                  <option value={activity.id} key={activity.id}>{activity.name}</option>
+                ))}
+              </Select>
+              <Select placeholder="Select Category" value={mapping.category} onChange={(e) => {
+                const newMapping = { ...mapping, category: e.target.value, driver: null };
+                setTaskDriverMapping(taskDriverMapping.map((m, idx) => idx === index ? newMapping : m));
+              }} mr={3}>
+                {categories.map((category) => (
+                  <option value={category} key={category}>{category}</option>
                 ))}
               </Select>
               <Select placeholder="Select Driver" value={mapping.driver} onChange={(e) => {
                 const newMapping = { ...mapping, driver: e.target.value };
                 setTaskDriverMapping(taskDriverMapping.map((m, idx) => idx === index ? newMapping : m));
               }}>
-                {allCostDrivers.map((driver) => (
+                {allCostDrivers.filter(driver => driver.category === mapping.category).map((driver) => (
                   <option value={driver.id} key={driver.id}>{driver.name}</option>
                 ))}
               </Select>

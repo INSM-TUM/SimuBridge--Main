@@ -29,6 +29,7 @@ import {
 } from 'min-dash';
 import SimulationModelModdle, { assign, limitToDataScheme } from "simulation-bridge-datamodel/DataModel";
 import VariantEditor from "./VariantEditor";
+import OLCAconnectionAlert from "./OLCAconnectionAlert";
 
 const LcaParameters = ({ getData }) => {
   //vars
@@ -38,38 +39,72 @@ const LcaParameters = ({ getData }) => {
   const [isFetchingRunning, setIsFetchingRunning] = useState(false);
   const [isScenarioModelLoaded, setIsScenarioModelLoaded] = useState(true);
   const impactMethodId = 'b4571628-4b7b-3e4f-81b1-9a8cca6cb3f8';
+  const [variants, setVariants] = useState([]);
+  const [currentVariant, setCurrentVariant] = useState('');
+  const [allCostDrivers, setAllCostDrivers] = useState([]);
+  const [isCostDriversLoaded, setIsCostDriversLoaded] = useState(false);
+  const [bpmnActivities, setBpmnActivities] = useState([]);
+  const modelData = getData().getCurrentModel();
+  const resourceParameters = getData().getCurrentScenario().resourceParameters;
+
+  const inputNameRef = useRef('');
+  const [selected, setSelected] = useState("Choose Abstract Component");
+  const [selectedC, setSelectedC] = useState("Choose Concrete Component");
+  const [activities, setActivities] = useState([1]);
 
   //init
   console.log("Current resource parameters: ", getData().getCurrentScenario().resourceParameters);
   console.log('Scenario Data: ', getData().getCurrentScenario().models[0]);
 
-  const [allCostDrivers, setAllCostDrivers] =
-    useState(getData().getCurrentScenario().resourceParameters.environmentalCostDrivers);
-  const [isCostDriversLoaded, setIsCostDriversLoaded] = useState(allCostDrivers.length > 0);
-
-  const [bpmnActivities, setBpmnActivities] = useState([]);
-
-  const modelData = getData().getCurrentModel();
-  useEffect(() => {
+  /*useEffect(() => {
     console.log("model data: ", modelData);
     if (modelData && modelData.elementsById) {
       const extractedTasks = Object.entries(modelData.elementsById)
         .filter(([_, value]) => value.$type === 'bpmn:Task')
         .map(([id, value]) => ({ id, name: value.name }));
 
-      setBpmnActivities(extractedTasks);
+      const uniqueBpmnActivities = Array.from(new Map(extractedTasks.map(item => [item.id, item])).values());
+      setBpmnActivities(uniqueBpmnActivities);
     }
   }, [modelData]);
 
-  const [variants, setVariants] = useState([]);
-  const [currentVariant, setCurrentVariant] = useState('');
-
-  const resourceParameters = getData().getCurrentScenario().resourceParameters;
+  
   useEffect(() => {
     if (resourceParameters.costVariantConfig) {
       setVariants(resourceParameters.costVariantConfig.variants);
     }
   }, [resourceParameters]);
+
+  useEffect(() => {
+    const costDrivers = getData().getCurrentScenario().resourceParameters.environmentalCostDrivers;
+    const uniqueCostDrivers = Array.from(new Map(costDrivers.map(item => [item.id, item])).values());
+    setAllCostDrivers(uniqueCostDrivers);
+    setIsCostDriversLoaded(uniqueCostDrivers.length > 0);
+  }, [getData().getCurrentScenario().resourceParameters.environmentalCostDrivers]);*/
+
+  useEffect(() => {
+    const scenario = getData().getCurrentScenario();
+
+    if (scenario) {
+      const costDrivers = scenario.resourceParameters.environmentalCostDrivers;
+      const uniqueCostDrivers = Array.from(new Map(costDrivers.map(item => [item.id, item])).values());
+      setAllCostDrivers(uniqueCostDrivers);
+      setIsCostDriversLoaded(uniqueCostDrivers.length > 0);
+
+      if (scenario.costVariantConfig) {
+        setVariants(scenario.costVariantConfig.variants);
+      }
+    }
+
+    const modelData = getData().getCurrentModel();
+    if (modelData && modelData.elementsById) {
+      const extractedTasks = Object.entries(modelData.elementsById)
+        .filter(([_, value]) => value.$type === 'bpmn:Task')
+        .map(([id, value]) => ({ id, name: value.name }));
+      const uniqueBpmnActivities = Array.from(new Map(extractedTasks.map(item => [item.id, item])).values());
+      setBpmnActivities(uniqueBpmnActivities);
+    }
+  }, []);
 
 
 
@@ -96,7 +131,7 @@ const LcaParameters = ({ getData }) => {
 
   const toast = useToast();
 
-  function AlertCostDriversLoaded() {
+  /*function AlertCostDriversLoaded() {
     const {
       isOpen: isVisible,
       onClose,
@@ -113,7 +148,7 @@ const LcaParameters = ({ getData }) => {
         <CloseButton position='relative' onClick={onClose} />
       </Alert>
     );
-  }
+  }*/
 
 
   const processApiResponse = async (response) => {
@@ -208,7 +243,6 @@ const LcaParameters = ({ getData }) => {
   };
 
   //const [myConfig, setMyConfig] = useState('');
-  const inputNameRef = useRef('');
 
   const handleSaveButtonClick = () => {
     //Handles the button that saves the variant configuration
@@ -224,11 +258,7 @@ const LcaParameters = ({ getData }) => {
     setVariants(variants.filter((_, index) => index !== indexToRemove));
   };
 
-  const [selected, setSelected] = useState("Choose Abstract Component");
-  const [selectedC, setSelectedC] = useState("Choose Concrete Component");
-
   //Functionality for adding in activity array
-  const [activities, setActivities] = useState([1]);
   const addActivity = () => {
     const newActivity = {/* new activity object */ };
     setActivities([...activities, newActivity]);
@@ -295,7 +325,7 @@ const LcaParameters = ({ getData }) => {
             {isFetchingRunning && <Progress mt={2} colorScheme='green' size='xs' isIndeterminate />}
             {
               isCostDriversLoaded && allCostDrivers &&
-              AlertCostDriversLoaded()
+              <OLCAconnectionAlert countCostDrivers={allCostDrivers.length}  />
             }
           </CardBody>
         </Card>
