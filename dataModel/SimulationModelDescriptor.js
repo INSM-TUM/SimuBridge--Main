@@ -117,8 +117,18 @@ export const SimulationModelDescriptor = {
                 { "name": "id", "type": "String"},
                 { "name": "name", "type": "String"},
                 { "name": "cost", "type": "String"},
+                { "name": "unit", "type": "TargetUnit"},
             ]
         },
+
+        {
+            "name" : "TargetUnit",
+            "properties": [
+                { "name": "id", "type": "String"},
+                { "name": "name", "type": "String"}
+            ]
+        },
+
         {
             "name" : "CostVariantConfig",
             "properties": [
