@@ -108,7 +108,7 @@ const LcaParameters = ({ getData }) => {
   const processApiResponse = async (response) => {
     var data = response.result;
     console.log('Cost drivers from API:', data);
-    var abstractCostDrivers = [];
+    var abstractCostDriversMap = new Map();
 
     data.forEach(el => {
         let unitConfig = SimulationModelModdle.getInstance().create("simulationmodel:TargetUnit", {
@@ -123,18 +123,20 @@ const LcaParameters = ({ getData }) => {
             unit: unitConfig
         });
 
-        let abstractDriver = abstractCostDrivers.find(driver => driver.name === el.abstractDriverName);
-        if (!abstractDriver) {
-            abstractDriver = SimulationModelModdle.getInstance().create("simulationmodel:AbstractCostDriver", {
-                id: el.category,
+        if (!abstractCostDriversMap.has(el.category)) {
+            let abstractDriver = SimulationModelModdle.getInstance().create("simulationmodel:AbstractCostDriver", {
+                id: el.category, // Using category as the unique identifier
                 name: el.category,
                 concreteCostDrivers: [concreteCostDriverConfig]
             });
-            abstractCostDrivers.push(abstractDriver);
+            abstractCostDriversMap.set(el.category, abstractDriver);
         } else {
+            let abstractDriver = abstractCostDriversMap.get(el.category);
             abstractDriver.concreteCostDrivers.push(concreteCostDriverConfig);
         }
     });
+
+    const abstractCostDrivers = Array.from(abstractCostDriversMap.values());
 
     getData().getCurrentScenario().resourceParameters.environmentalCostDrivers = abstractCostDrivers;
 
