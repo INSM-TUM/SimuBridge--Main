@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import {
   Alert, AlertIcon, AlertDescription, CloseButton, useDisclosure,
+  Accordion, AccordionItem, AccordionButton, AccordionPanel, AccordionIcon,
   Flex, Stack,
   Heading,
   Card, CardHeader, CardBody,
@@ -11,7 +12,7 @@ import {
   Box,
   Spinner,
   useToast,
-  UnorderedList, ListItem,
+  UnorderedList, ListItem
 } from '@chakra-ui/react';
 
 import { ExternalLinkIcon } from '@chakra-ui/icons';
@@ -55,9 +56,19 @@ const LcaParameters = ({ getData }) => {
         .filter(([_, value]) => value.$type === 'bpmn:Task')
         .map(([id, value]) => ({ id, name: value.name }));
 
-        setBpmnActivities(extractedTasks);
+      setBpmnActivities(extractedTasks);
     }
   }, [modelData]);
+
+  const [variants, setVariants] = useState([]);
+
+  const resourceParameters = getData().getCurrentScenario().resourceParameters;
+  useEffect(() => {
+    if (resourceParameters.costVariantConfig) {
+      setVariants(resourceParameters.costVariantConfig.variants);
+    }
+  }, [resourceParameters]);
+
 
   //handlers
   const handleInputChange = (event) => {
@@ -189,22 +200,21 @@ const LcaParameters = ({ getData }) => {
       });
   };
 
-  const [variants, setMyVariants] = useState([]);
-  const [myConfig, setMyConfig] = useState('');
+  //const [myConfig, setMyConfig] = useState('');
   const inputNameRef = useRef('');
 
   const handleSaveButtonClick = () => {
     //Handles the button that saves the variant configuration
 
-    const currentConfig = inputNameRef.current.value;
+    /*const currentConfig = inputNameRef.current.value;
     if (currentConfig !== '') {
-      setMyVariants(prevVariants => [...prevVariants, currentConfig]);
+      setVariants(prevVariants => [...prevVariants, currentConfig]);
       inputNameRef.current.value = '';
-    }
+    }*/
   };
 
   const removeItem = (indexToRemove) => {
-    setMyVariants(variants.filter((_, index) => index !== indexToRemove));
+    setVariants(variants.filter((_, index) => index !== indexToRemove));
   };
 
   const [selected, setSelected] = useState("Choose Abstract Component");
@@ -281,6 +291,39 @@ const LcaParameters = ({ getData }) => {
             }
           </CardBody>
         </Card>
+        <Card my={2}>
+          <CardHeader>
+            <Heading size='md'>Saved variants (total: {variants.length})</Heading>
+            {console.log("Variants: ", variants)}
+          </CardHeader>
+          <CardBody>
+            
+          </CardBody>
+        </Card>
+        <Card my={2}>
+          <CardHeader>
+            <Heading size='md'>Mapping between Tasks and Product Systems</Heading>
+          </CardHeader>
+          <CardBody>
+            <Accordion allowToggle>
+              {bpmnActivities.map((activity, index) => (
+                <AccordionItem>
+                  <h2>
+                    <AccordionButton>
+                      <Box as="span" flex='1' textAlign='left'>
+                        {activity.name}
+                      </Box>
+                      <AccordionIcon />
+                    </AccordionButton>
+                  </h2>
+                  <AccordionPanel pb={4}>
+                    Dropdowns
+                  </AccordionPanel>
+                </AccordionItem>
+              ))}
+            </Accordion>
+          </CardBody>
+        </Card>
 
         <br></br>
         <br></br>
@@ -288,46 +331,6 @@ const LcaParameters = ({ getData }) => {
         <hr style={{ borderTop: '2px solid black' }} />
         <br></br>
 
-        {variants.map((item, index) => (
-          <div key={index}
-            style={{
-              border: '0.1px solid black',
-              padding: '2px',
-              margin: '2px',
-              fontWeight: 'bold',
-              fontSize: '15px',
-              display: 'flex',
-              justifyContent: 'space-between',
-            }}>
-            {item}
-            <button
-              style={{
-                cursor: 'pointer',
-                width: '30px', // Set width to make the button square
-                height: '30px', // Set height to make the button square
-                justifyContent: 'center', // Center 'x' horizontally
-                alignItems: 'center', // Center 'x' vertically
-                fontWeight: 'bold',
-                fontSize: '15px',
-                margin: '2px',
-                marginLeft: 'auto',
-                border: '0.1px solid black',
-                backgroundColor: '#FF0800',
-                color: '#FFFFFF',
-                boxShadow: '2px 2px 5px rgba(0, 0, 0, 0.5)',
-                transition: 'background-color 0.3s',
-
-              }}
-              onClick={
-                () => removeItem(index)}
-              // Add :hover styles
-              onMouseEnter={(e) => e.target.style.backgroundColor = '#8B0000'}
-              onMouseLeave={(e) => e.target.style.backgroundColor = '#FF0800'}>
-              x
-            </button>
-          </div> // Create a new div for each item
-        ))
-        }
 
         <div className="Big-Container" style={{
           border: '0.1px solid black',
