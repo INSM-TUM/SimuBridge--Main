@@ -28,6 +28,7 @@ import {
   debounce
 } from 'min-dash';
 import SimulationModelModdle, { assign, limitToDataScheme } from "simulation-bridge-datamodel/DataModel";
+import VariantEditor from "./VariantEditor";
 
 const LcaParameters = ({ getData }) => {
   //vars
@@ -61,6 +62,7 @@ const LcaParameters = ({ getData }) => {
   }, [modelData]);
 
   const [variants, setVariants] = useState([]);
+  const [currentVariant, setCurrentVariant] = useState('');
 
   const resourceParameters = getData().getCurrentScenario().resourceParameters;
   useEffect(() => {
@@ -68,6 +70,7 @@ const LcaParameters = ({ getData }) => {
       setVariants(resourceParameters.costVariantConfig.variants);
     }
   }, [resourceParameters]);
+
 
 
   //handlers
@@ -156,6 +159,10 @@ const LcaParameters = ({ getData }) => {
       return;
     }
 
+    const saveCostVariant = (costVariant) => {
+      console.log('Saving cost variant:', costVariant);
+    }
+
     setIsFetchingRunning(true);
 
     // Make an API call using fetch
@@ -232,6 +239,7 @@ const LcaParameters = ({ getData }) => {
     setActivities(prevActivities => prevActivities.filter((_, index) => index !== indexToRemove));
   };
 
+
   return (
     !isScenarioModelLoaded ?
       <Flex
@@ -297,33 +305,14 @@ const LcaParameters = ({ getData }) => {
             {console.log("Variants: ", variants)}
           </CardHeader>
           <CardBody>
-            
+            {/* list of variants */}
           </CardBody>
         </Card>
-        <Card my={2}>
-          <CardHeader>
-            <Heading size='md'>Mapping between Tasks and Product Systems</Heading>
-          </CardHeader>
-          <CardBody>
-            <Accordion allowToggle>
-              {bpmnActivities.map((activity, index) => (
-                <AccordionItem>
-                  <h2>
-                    <AccordionButton>
-                      <Box as="span" flex='1' textAlign='left'>
-                        {activity.name}
-                      </Box>
-                      <AccordionIcon />
-                    </AccordionButton>
-                  </h2>
-                  <AccordionPanel pb={4}>
-                    Dropdowns
-                  </AccordionPanel>
-                </AccordionItem>
-              ))}
-            </Accordion>
-          </CardBody>
-        </Card>
+        <VariantEditor
+          costVariant={currentVariant}
+          bpmnActivities={bpmnActivities}
+          allCostDrivers={allCostDrivers}
+        />
 
         <br></br>
         <br></br>
