@@ -44,6 +44,7 @@ const LcaParameters = () => {
 
   const fillDefaultHostPortButtonClick = () => {
     setApiUrl('http://localhost:8080');
+    setIsApiUrlValid(true);
   };
 
   const toast = useToast();
