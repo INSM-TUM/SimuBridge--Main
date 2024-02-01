@@ -60,7 +60,7 @@ export const SimulationModelDescriptor = {
                 { "name": "resources", "type": "Resource", isMany : true },
                 { "name": "timeTables", "type": "Timetable", isMany : true },
                 { "name": "costDrivers", "type": "AbstractCostDriver", isMany : true },
-                { "name": "environmentalCostDrivers", "type": "ConcreteCostDriver", isMany : true},
+                { "name": "environmentalCostDrivers", "type": "AbstractCostDriver", isMany : true},
                 { "name": "costVariantConfig", "type": "CostVariantConfig" }
             ]
         },

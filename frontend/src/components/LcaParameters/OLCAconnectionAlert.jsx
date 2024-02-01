@@ -1,14 +1,13 @@
-import React, { useState } from 'react';
+import React from 'react';
 import {
   Alert, AlertIcon, AlertDescription, CloseButton, useDisclosure,
-  Flex, Stack,
+  Flex
 } from '@chakra-ui/react';
 
-export default function OLCAconnectionAlert({countCostDrivers}) {
-    const {
-        isOpen: isVisible,
-        onClose,
-    } = useDisclosure({ defaultIsOpen: true });
+export default function OLCAconnectionAlert({ countCostDrivers }) {
+    const { isOpen, onClose } = useDisclosure({ defaultIsOpen: true });
+
+    if (!isOpen) return null;
 
     return (
         <Alert status='success' mt={2} display='flex' alignItems='center' justifyContent='space-between'>

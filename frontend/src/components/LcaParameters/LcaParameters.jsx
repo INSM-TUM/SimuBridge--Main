@@ -56,32 +56,6 @@ const LcaParameters = ({ getData }) => {
   console.log("Current resource parameters: ", getData().getCurrentScenario().resourceParameters);
   console.log('Scenario Data: ', getData().getCurrentScenario().models[0]);
 
-  /*useEffect(() => {
-    console.log("model data: ", modelData);
-    if (modelData && modelData.elementsById) {
-      const extractedTasks = Object.entries(modelData.elementsById)
-        .filter(([_, value]) => value.$type === 'bpmn:Task')
-        .map(([id, value]) => ({ id, name: value.name }));
-
-      const uniqueBpmnActivities = Array.from(new Map(extractedTasks.map(item => [item.id, item])).values());
-      setBpmnActivities(uniqueBpmnActivities);
-    }
-  }, [modelData]);
-
-  
-  useEffect(() => {
-    if (resourceParameters.costVariantConfig) {
-      setVariants(resourceParameters.costVariantConfig.variants);
-    }
-  }, [resourceParameters]);
-
-  useEffect(() => {
-    const costDrivers = getData().getCurrentScenario().resourceParameters.environmentalCostDrivers;
-    const uniqueCostDrivers = Array.from(new Map(costDrivers.map(item => [item.id, item])).values());
-    setAllCostDrivers(uniqueCostDrivers);
-    setIsCostDriversLoaded(uniqueCostDrivers.length > 0);
-  }, [getData().getCurrentScenario().resourceParameters.environmentalCostDrivers]);*/
-
   useEffect(() => {
     const scenario = getData().getCurrentScenario();
 
@@ -131,55 +105,46 @@ const LcaParameters = ({ getData }) => {
 
   const toast = useToast();
 
-  /*function AlertCostDriversLoaded() {
-    const {
-      isOpen: isVisible,
-      onClose,
-    } = useDisclosure({ defaultIsOpen: true });
-
-    if (!isVisible) return null;
-
-    return (
-      <Alert status='success' mt={2} display='flex' alignItems='center' justifyContent='space-between'>
-        <Flex alignItems='center'>
-          <AlertIcon />
-          <AlertDescription>{allCostDrivers.length} cost drivers loaded</AlertDescription>
-        </Flex>
-        <CloseButton position='relative' onClick={onClose} />
-      </Alert>
-    );
-  }*/
-
-
   const processApiResponse = async (response) => {
-    //console.log('Resource Parameters:', getData().getCurrentScenario().resourceParameters);
     var data = response.result;
-    var environmentalCostDrivers = [];
+    console.log('Cost drivers from API:', data);
+    var abstractCostDrivers = [];
 
     data.forEach(el => {
-      let unit = {
-        id: el.targetUnit['@id'],
-        name: el.targetUnit.name,
-      };
-      const unitConfig = SimulationModelModdle.getInstance().create("simulationmodel:TargetUnit", unit);
+        let unitConfig = SimulationModelModdle.getInstance().create("simulationmodel:TargetUnit", {
+            id: el.targetUnit['@id'],
+            name: el.targetUnit.name,
+        });
 
-      let costDriver = {
-        id: el['@id'],
-        name: el.name,
-        cost: el.targetAmount,
-        unit: unitConfig
-      };
-      const costDriverConfig = SimulationModelModdle.getInstance().create("simulationmodel:ConcreteCostDriver", costDriver);
+        let concreteCostDriverConfig = SimulationModelModdle.getInstance().create("simulationmodel:ConcreteCostDriver", {
+            id: el['@id'],
+            name: el.name,
+            cost: el.targetAmount,
+            unit: unitConfig
+        });
 
-      getData().getCurrentScenario().resourceParameters.environmentalCostDrivers.push(costDriverConfig);
+        let abstractDriver = abstractCostDrivers.find(driver => driver.name === el.abstractDriverName);
+        if (!abstractDriver) {
+            abstractDriver = SimulationModelModdle.getInstance().create("simulationmodel:AbstractCostDriver", {
+                id: el['@type'],
+                name: el['@type'],
+                concreteCostDrivers: [concreteCostDriverConfig]
+            });
+            abstractCostDrivers.push(abstractDriver);
+        } else {
+            abstractDriver.concreteCostDrivers.push(concreteCostDriverConfig);
+        }
     });
 
-    setAllCostDrivers(getData().getCurrentScenario().resourceParameters.environmentalCostDrivers);
+    getData().getCurrentScenario().resourceParameters.environmentalCostDrivers = abstractCostDrivers;
 
+    console.log('Abstract Cost Drivers:', abstractCostDrivers);
     console.log('Resource Parameters:', getData().getCurrentScenario().resourceParameters);
 
     await getData().saveCurrentScenario();
-  }
+};
+
+
 
   const handleButtonClick = async () => {
     if (!isApiUrlValid) {
@@ -343,110 +308,7 @@ const LcaParameters = ({ getData }) => {
           bpmnActivities={bpmnActivities}
           allCostDrivers={allCostDrivers}
         />
-
-        <br></br>
-        <br></br>
-
-        <hr style={{ borderTop: '2px solid black' }} />
-        <br></br>
-
-
-        <div className="Big-Container" style={{
-          border: '0.1px solid black',
-          padding: '0px',
-          margin: '0px',
-        }}>
-
-          {/* This adds an extra activity based on the users preference*/}
-
-          {activities.map((activity, index) => (
-            <div key={index} style={{ display: 'flex', alignItems: 'center' }}>
-              <label style={{ padding: '5px 10px', fontSize: '15px', fontWeight: 'bold' }}>
-                Activity {index + 1}
-              </label>
-              <Dropdown selected={selected} setSelected={setSelected} />
-              <Dropdown selected={selectedC} setSelected={setSelectedC} />
-
-              {/* This adds a button that adds an activity*/}
-
-              <button style={{
-                marginLeft: 'auto',
-                visibility: index === activities.length - 1 ? 'visible' : 'hidden',
-                fontWeight: 'bold',
-                backgroundColor: '#FFFFFF',
-                boxShadow: '0px 0px 5px 2px rgba(0,0,0,0.1)',
-                width: '30px',
-                height: '30px',
-                justifyContent: 'center', // Center '+' horizontally
-                alignItems: 'center', // Center '+' vertically
-                transition: 'background-color 0.3s',
-              }}
-
-                onClick={addActivity}
-                onMouseEnter={(e) => e.target.style.backgroundColor = '#808080'}
-                onMouseLeave={(e) => e.target.style.backgroundColor = '#FFFFFF'}>
-                +
-              </button>
-              {/* This adds a button that removes an activity*/}
-
-              {activities.length > 1 && <button
-                style={{
-                  marginLeft: '10px',
-                  marginRight: '10px',
-                  padding: '5px',
-                  fontWeight: 'bold',
-                  width: '30px',
-                  height: '30px',
-                  justifyContent: 'center', // Center '-' horizontally
-                  alignItems: 'center', // Center '-' vertically
-                  backgroundColor: '#FFFFFF',
-                  boxShadow: '0px 0px 5px 2px rgba(0,0,0,0.1)',
-                  transition: 'background-color 0.3s',
-                }}
-                onClick={() => removeActivity(index)}
-                onMouseEnter={(e) => e.target.style.backgroundColor = '#FF0800'}
-                onMouseLeave={(e) => e.target.style.backgroundColor = '#FFFFFF'}>
-                -
-              </button>}
-            </div>
-          ))}
-
-          {/* Code for extra activity ends here*/}
-
-          <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-            <input style={{
-              display: 'flex',
-              marginLeft: 'auto',
-              border: '0.1px solid black',
-              padding: '5px',
-              margin: '5px',
-            }}
-              type="text"
-              placeholder="Save Variant as:"
-              ref={inputNameRef} // Update inputName when the input changes
-            />
-            <button style={{
-              margin: '5px',
-              padding: '5px',
-              fontWeight: 'bold',
-              background: '#45CEA2',
-              border: '0.1px solid black',
-              cursor: 'pointer',
-              borderRadius: '8px',
-              transition: 'background-color 0.3s',
-            }}
-              onClick={handleSaveButtonClick}
-              onMouseEnter={(e) => e.target.style.backgroundColor = '#50C878'}
-              onMouseLeave={(e) => e.target.style.backgroundColor = '#45CEA2'}
-            >
-              Save variant
-            </button>
-          </div>
-        </div>
-
-
-
-      </Box>
+       </Box>
   );
 };
 export default LcaParameters;
