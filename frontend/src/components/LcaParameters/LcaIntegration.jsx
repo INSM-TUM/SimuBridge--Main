@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from "react";
 import {
   Alert, AlertIcon, AlertDescription, CloseButton, useDisclosure,
   Accordion, AccordionItem, AccordionButton, AccordionPanel, AccordionIcon,
-  Flex, Stack,
+  Flex,
   Heading,
   Card, CardHeader, CardBody,
   Text,
@@ -16,42 +16,20 @@ import {
 } from '@chakra-ui/react';
 
 import { ExternalLinkIcon } from '@chakra-ui/icons';
-import ProgressPage from "../StartView/ProgressPage";
-
-import { FiChevronDown } from 'react-icons/fi';
-import Dropdown from './Dropdown';
 import "./styles.css"
-import { faRightFromBracket } from "@fortawesome/free-solid-svg-icons";
 
-
-import {
-  debounce
-} from 'min-dash';
 import SimulationModelModdle, { assign, limitToDataScheme } from "simulation-bridge-datamodel/DataModel";
-import VariantEditor from "./VariantEditor";
-import OLCAconnectionAlert from "./OLCAconnectionAlert";
 
 const LcaIntegration = ({ getData, toasting }) => {
   //vars
-  const [inputValue, setInputValue] = useState('');
   const defaultApiUrl = 'http://localhost:8081';
   const [apiUrl, setApiUrl] = useState(defaultApiUrl);
   const [isApiUrlValid, setIsApiUrlValid] = useState(true);
   const [isFetchingRunning, setIsFetchingRunning] = useState(false);
   const [isScenarioModelLoaded, setIsScenarioModelLoaded] = useState(true);
   const impactMethodId = 'b4571628-4b7b-3e4f-81b1-9a8cca6cb3f8';
-  const [variants, setVariants] = useState([]);
-  const [currentVariant, setCurrentVariant] = useState('');
   const [allCostDrivers, setAllCostDrivers] = useState([]);
   const [isCostDriversLoaded, setIsCostDriversLoaded] = useState(false);
-  const [bpmnActivities, setBpmnActivities] = useState([]);
-  const modelData = getData().getCurrentModel();
-  const resourceParameters = getData().getCurrentScenario().resourceParameters;
-
-  const inputNameRef = useRef('');
-  const [selected, setSelected] = useState("Choose Abstract Component");
-  const [selectedC, setSelectedC] = useState("Choose Concrete Component");
-  const [activities, setActivities] = useState([1]);
 
   //init
   console.log("Current resource parameters: ", getData().getCurrentScenario().resourceParameters);
@@ -65,28 +43,8 @@ const LcaIntegration = ({ getData, toasting }) => {
       const uniqueCostDrivers = Array.from(new Map(costDrivers.map(item => [item.id, item])).values());
       setAllCostDrivers(uniqueCostDrivers);
       setIsCostDriversLoaded(uniqueCostDrivers.length > 0);
-
-      if (scenario.costVariantConfig) {
-        setVariants(scenario.costVariantConfig.variants);
-      }
-    }
-
-    const modelData = getData().getCurrentModel();
-    if (modelData && modelData.elementsById) {
-      const extractedTasks = Object.entries(modelData.elementsById)
-        .filter(([_, value]) => value.$type === 'bpmn:Task')
-        .map(([id, value]) => ({ id, name: value.name }));
-      const uniqueBpmnActivities = Array.from(new Map(extractedTasks.map(item => [item.id, item])).values());
-      setBpmnActivities(uniqueBpmnActivities);
     }
   }, []);
-
-
-
-  //handlers
-  const handleInputChange = (event) => {
-    setInputValue(event.target.value);
-  };
 
   const handleApiUrlChange = (event) => {
     const value = event.target.value;
@@ -103,8 +61,6 @@ const LcaIntegration = ({ getData, toasting }) => {
     setApiUrl(defaultApiUrl);
     setIsApiUrlValid(true);
   };
-
-  const toast = useToast();
 
   const processApiResponse = async (response) => {
     var data = response.result;
@@ -145,26 +101,15 @@ const LcaIntegration = ({ getData, toasting }) => {
     console.log('Resource Parameters:', getData().getCurrentScenario().resourceParameters);
 
     await getData().saveCurrentScenario();
-    toasting("success", "Success", "Cost drivers fetched successfully");
+    toasting("success", "Success", "Cost drivers were successfully saved to the application");
+    setAllCostDrivers(abstractCostDrivers);
+    setIsCostDriversLoaded(true);
   };
-
-
 
   const handleButtonClick = async () => {
     if (!isApiUrlValid) {
-      toast({
-        title: "Invalid URL",
-        description: "Please enter a valid URL in the format 'http://[host]:[port]'",
-        status: "error",
-        duration: 3000,
-        isClosable: true,
-      });
-
+      toasting("error", "Invalid URL", "Please enter a valid URL in the format 'http://[host]:[port]'");
       return;
-    }
-
-    const saveCostVariant = (costVariant) => {
-      console.log('Saving cost variant:', costVariant);
     }
 
     setIsFetchingRunning(true);
@@ -193,52 +138,23 @@ const LcaIntegration = ({ getData, toasting }) => {
       .then(async (data) => {
         console.log('API Response:', data);
         await processApiResponse(data);
-        setIsCostDriversLoaded(true);
         toasting("success", "Success", "Cost drivers fetched successfully");
         // Handle the response as needed
       })
       .catch((error) => {
         setIsFetchingRunning(false);
-        toast({
-          title: "Error while fetching data from OpenLCA",
-          description: "Please check if the OpenLCA IPC server is running and the URL is correct",
-          status: "error",
-          duration: 3000,
-          isClosable: true,
-        });
+        toasting("error", "Error", "Please check if the OpenLCA IPC server is running and the URL is correct");
 
         console.error('API Error:', error);
         // Handle errors as needed
       });
   };
 
-  //const [myConfig, setMyConfig] = useState('');
-
-  const handleSaveButtonClick = () => {
-    //Handles the button that saves the variant configuration
-
-    /*const currentConfig = inputNameRef.current.value;
-    if (currentConfig !== '') {
-      setVariants(prevVariants => [...prevVariants, currentConfig]);
-      inputNameRef.current.value = '';
-    }*/
-  };
-
-  const removeItem = (indexToRemove) => {
-    setVariants(variants.filter((_, index) => index !== indexToRemove));
-  };
-
-  //Functionality for adding in activity array
-  const addActivity = () => {
-    const newActivity = {/* new activity object */ };
-    setActivities([...activities, newActivity]);
-  };
-
-  //Functionality for removing from activity array
-  const removeActivity = (indexToRemove) => {
-    setActivities(prevActivities => prevActivities.filter((_, index) => index !== indexToRemove));
-  };
-
+  const {
+    isOpen: isAlertBoxVisible,
+    onClose,
+    onOpen,
+  } = useDisclosure({ defaultIsOpen: true })
 
   return (
     !isScenarioModelLoaded ?
@@ -293,17 +209,50 @@ const LcaIntegration = ({ getData, toasting }) => {
               </Button>
             </Flex>
             {isFetchingRunning && <Progress mt={2} colorScheme='green' size='xs' isIndeterminate />}
-            {
-              isCostDriversLoaded && allCostDrivers &&
-              <OLCAconnectionAlert countCostDrivers={allCostDrivers.length} />
-            }
           </CardBody>
         </Card>
+        
+        { !isCostDriversLoaded && isAlertBoxVisible &&
+          <Alert status='warning' mt={2} display='flex' alignItems='center' justifyContent='space-between'>
+            <Flex alignItems='center'>
+                <AlertIcon />
+                <AlertDescription>There are no cost drivers saved in the system. Use the window above to fetch.</AlertDescription>
+            </Flex>
+            <CloseButton position='relative' onClick={onClose} />
+        </Alert>
+        }
         {isCostDriversLoaded &&
           <Card mt={2}>
             <CardHeader>
-              <Heading size='md'>{allCostDrivers.length} cost drivers</Heading>
+              <Heading size='md'>{allCostDrivers.length} abstract cost drivers</Heading>
             </CardHeader>
+            <CardBody>
+              <Accordion allowToggle>
+                {allCostDrivers.map((costDriver, index) => (
+                  <AccordionItem key={index}>
+                    <h2>
+                      <AccordionButton>
+                        <Box flex="1" textAlign="left">
+                          <Text fontSize="lg" fontWeight="bold">
+                            {costDriver.name}
+                          </Text>
+                        </Box>
+                        <AccordionIcon />
+                      </AccordionButton>
+                    </h2>
+                    <AccordionPanel pb={4}>
+                      <UnorderedList>
+                        {costDriver.concreteCostDrivers.map((concreteCostDriver, index) => (
+                          <ListItem key={index}>
+                            {concreteCostDriver.name}: {concreteCostDriver.cost} {concreteCostDriver.unit.name}
+                          </ListItem>
+                        ))}
+                      </UnorderedList>
+                    </AccordionPanel>
+                  </AccordionItem>
+                ))}
+              </Accordion>
+            </CardBody>
           </Card>
         }
       </Box>

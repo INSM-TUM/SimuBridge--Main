@@ -208,7 +208,6 @@ const toasting = (type, title, text) =>{
 }
 
 
-
 const oldProjectName = projectData?.projectName;
 let projectData = new ProjectDataClass(projectName);
 window.projectData = projectData; //TODO for debugging purposes

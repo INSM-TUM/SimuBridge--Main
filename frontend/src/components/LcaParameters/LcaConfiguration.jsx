@@ -19,7 +19,6 @@ import { ExternalLinkIcon } from '@chakra-ui/icons';
 import ProgressPage from "../StartView/ProgressPage";
 
 import { FiChevronDown } from 'react-icons/fi';
-import Dropdown from './Dropdown';
 import "./styles.css"
 import { faRightFromBracket } from "@fortawesome/free-solid-svg-icons";
 
@@ -36,6 +35,31 @@ function LcaConfiguration({ getData,toasting }) {
   const [currentVariant, setCurrentVariant] = useState('');
   const [allCostDrivers, setAllCostDrivers] = useState([]);
   const [bpmnActivities, setBpmnActivities] = useState([]);
+  const [isCostDriversLoaded, setIsCostDriversLoaded] = useState(false);
+
+  useEffect(() => {
+    const scenario = getData().getCurrentScenario();
+
+    if (scenario) {
+      const costDrivers = scenario.resourceParameters.environmentalCostDrivers;
+      const uniqueCostDrivers = Array.from(new Map(costDrivers.map(item => [item.id, item])).values());
+      setAllCostDrivers(uniqueCostDrivers);
+      setIsCostDriversLoaded(uniqueCostDrivers.length > 0);
+
+      if (scenario.costVariantConfig) {
+        setVariants(scenario.costVariantConfig.variants);
+      }
+    }
+
+    const modelData = getData().getCurrentModel();
+    if (modelData && modelData.elementsById) {
+      const extractedTasks = Object.entries(modelData.elementsById)
+        .filter(([_, value]) => value.$type === 'bpmn:Task')
+        .map(([id, value]) => ({ id, name: value.name }));
+      const uniqueBpmnActivities = Array.from(new Map(extractedTasks.map(item => [item.id, item])).values());
+      setBpmnActivities(uniqueBpmnActivities);
+    }
+  }, []);
 
   return (
     <Box>
