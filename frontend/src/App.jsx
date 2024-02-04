@@ -22,7 +22,8 @@ import BpmnView from './components/ModelbasedParameters/BpmnView';
 import SimulationModelModdle from 'simulation-bridge-datamodel/DataModel';
 import ModelBasedOverview from './components/TablesOverviewComparison/ModelBasedOverview';
 import { ModelData, ScenarioData } from './util/DataHandles';
-import LcaParameters from './components/LcaParameters/LcaParameters';
+import LcaIntegration from './components/LcaParameters/LcaIntegration';
+import LcaConfiguration from './components/LcaParameters/LcaConfiguration';
 
 const errorsToWarn = [
   "Warning:",
@@ -313,12 +314,12 @@ useEffect(() => {
               <Route path="/modelbased" element={atLeastOneModel && <BpmnView {...{ getData, setCurrentRightSideBar }} />} />
               {/* <Route path="/modelbased/tableview" element={atLeastOneModel && <ModelBasedOverview currentModel={getData().getCurrentModel()}   />} /> */}
               <Route path="/modelbased/tableview" element={atLeastOneModel && <ModelbasedParametersTable getData={getData} current={current} setCurrent={setCurrent} setObject={setObject}   />} />
-
-
+              
+              <Route path="/lcaconfiguration" element={<LcaConfiguration path="/lcaconfiguration" {...{projectName, getData, toasting }} />} />
 
               <Route path="/simulation" element={<SimulationPage path="/simulation"  {...{projectName, getData, toasting }} />} />
               <Route path="/processminer" element={<ProcessMinerPage path="/processminer" {...{projectName, getData, toasting }} />} />
-              <Route path="/lcaparameters" element={<LcaParameters path="/lcaparameters" {...{projectName, getData, toasting }} />} />
+              <Route path="/lcaintegration" element={<LcaIntegration path="/lcaintegration" {...{projectName, getData, toasting }} />} />
               <Route path="/debug" element={<DebugPage path="/debug" {...{projectName, getData, toasting }} />} />
               <Route path='*' element={<Navigate to='/overview' />} />
             </Routes>

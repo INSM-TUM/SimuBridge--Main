@@ -31,10 +31,11 @@ import SimulationModelModdle, { assign, limitToDataScheme } from "simulation-bri
 import VariantEditor from "./VariantEditor";
 import OLCAconnectionAlert from "./OLCAconnectionAlert";
 
-const LcaParameters = ({ getData }) => {
+const LcaIntegration = ({ getData, toasting }) => {
   //vars
   const [inputValue, setInputValue] = useState('');
-  const [apiUrl, setApiUrl] = useState('http://localhost:8080');
+  const defaultApiUrl = 'http://localhost:8081';
+  const [apiUrl, setApiUrl] = useState(defaultApiUrl);
   const [isApiUrlValid, setIsApiUrlValid] = useState(true);
   const [isFetchingRunning, setIsFetchingRunning] = useState(false);
   const [isScenarioModelLoaded, setIsScenarioModelLoaded] = useState(true);
@@ -99,7 +100,7 @@ const LcaParameters = ({ getData }) => {
   };
 
   const fillDefaultHostPortButtonClick = () => {
-    setApiUrl('http://localhost:8080');
+    setApiUrl(defaultApiUrl);
     setIsApiUrlValid(true);
   };
 
@@ -111,29 +112,29 @@ const LcaParameters = ({ getData }) => {
     var abstractCostDriversMap = new Map();
 
     data.forEach(el => {
-        let unitConfig = SimulationModelModdle.getInstance().create("simulationmodel:TargetUnit", {
-            id: el.targetUnit['@id'],
-            name: el.targetUnit.name,
-        });
+      let unitConfig = SimulationModelModdle.getInstance().create("simulationmodel:TargetUnit", {
+        id: el.targetUnit['@id'],
+        name: el.targetUnit.name,
+      });
 
-        let concreteCostDriverConfig = SimulationModelModdle.getInstance().create("simulationmodel:ConcreteCostDriver", {
-            id: el['@id'],
-            name: el.name,
-            cost: el.targetAmount,
-            unit: unitConfig
-        });
+      let concreteCostDriverConfig = SimulationModelModdle.getInstance().create("simulationmodel:ConcreteCostDriver", {
+        id: el['@id'],
+        name: el.name,
+        cost: el.targetAmount,
+        unit: unitConfig
+      });
 
-        if (!abstractCostDriversMap.has(el.category)) {
-            let abstractDriver = SimulationModelModdle.getInstance().create("simulationmodel:AbstractCostDriver", {
-                id: el.category, // Using category as the unique identifier
-                name: el.category,
-                concreteCostDrivers: [concreteCostDriverConfig]
-            });
-            abstractCostDriversMap.set(el.category, abstractDriver);
-        } else {
-            let abstractDriver = abstractCostDriversMap.get(el.category);
-            abstractDriver.concreteCostDrivers.push(concreteCostDriverConfig);
-        }
+      if (!abstractCostDriversMap.has(el.category)) {
+        let abstractDriver = SimulationModelModdle.getInstance().create("simulationmodel:AbstractCostDriver", {
+          id: el.category, // Using category as the unique identifier
+          name: el.category,
+          concreteCostDrivers: [concreteCostDriverConfig]
+        });
+        abstractCostDriversMap.set(el.category, abstractDriver);
+      } else {
+        let abstractDriver = abstractCostDriversMap.get(el.category);
+        abstractDriver.concreteCostDrivers.push(concreteCostDriverConfig);
+      }
     });
 
     const abstractCostDrivers = Array.from(abstractCostDriversMap.values());
@@ -144,7 +145,8 @@ const LcaParameters = ({ getData }) => {
     console.log('Resource Parameters:', getData().getCurrentScenario().resourceParameters);
 
     await getData().saveCurrentScenario();
-};
+    toasting("success", "Success", "Cost drivers fetched successfully");
+  };
 
 
 
@@ -192,6 +194,7 @@ const LcaParameters = ({ getData }) => {
         console.log('API Response:', data);
         await processApiResponse(data);
         setIsCostDriversLoaded(true);
+        toasting("success", "Success", "Cost drivers fetched successfully");
         // Handle the response as needed
       })
       .catch((error) => {
@@ -292,25 +295,18 @@ const LcaParameters = ({ getData }) => {
             {isFetchingRunning && <Progress mt={2} colorScheme='green' size='xs' isIndeterminate />}
             {
               isCostDriversLoaded && allCostDrivers &&
-              <OLCAconnectionAlert countCostDrivers={allCostDrivers.length}  />
+              <OLCAconnectionAlert countCostDrivers={allCostDrivers.length} />
             }
           </CardBody>
         </Card>
-        <Card my={2}>
-          <CardHeader>
-            <Heading size='md'>Saved variants (total: {variants.length})</Heading>
-            {console.log("Variants: ", variants)}
-          </CardHeader>
-          <CardBody>
-            {/* list of variants */}
-          </CardBody>
-        </Card>
-        <VariantEditor
-          costVariant={currentVariant}
-          bpmnActivities={bpmnActivities}
-          allCostDrivers={allCostDrivers}
-        />
-       </Box>
+        {isCostDriversLoaded &&
+          <Card mt={2}>
+            <CardHeader>
+              <Heading size='md'>{allCostDrivers.length} cost drivers</Heading>
+            </CardHeader>
+          </Card>
+        }
+      </Box>
   );
 };
-export default LcaParameters;
+export default LcaIntegration;
