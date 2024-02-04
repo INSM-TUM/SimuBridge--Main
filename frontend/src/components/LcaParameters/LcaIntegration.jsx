@@ -32,9 +32,6 @@ const LcaIntegration = ({ getData, toasting }) => {
   const [isCostDriversLoaded, setIsCostDriversLoaded] = useState(false);
 
   //init
-  console.log("Current resource parameters: ", getData().getCurrentScenario().resourceParameters);
-  console.log('Scenario Data: ', getData().getCurrentScenario().models[0]);
-
   useEffect(() => {
     const scenario = getData().getCurrentScenario();
 

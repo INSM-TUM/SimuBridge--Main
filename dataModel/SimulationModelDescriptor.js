@@ -141,6 +141,7 @@ export const SimulationModelDescriptor = {
             "name" : "Variant",
             "properties": [
                 { "name": "id", "type": "String"},
+                { "name": "name", "type": "String"},
                 { "name": "frequency", "type": "String"},
                 { "name": "drivers", "type": "Driver", isMany : true }
             ]

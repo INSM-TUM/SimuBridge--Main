@@ -7,9 +7,19 @@ import {
 import { FiSave } from 'react-icons/fi';
 import { AiOutlineMinusCircle } from 'react-icons/ai';
 
-export default function VariantEditor({ costVariant, setCostVariant, bpmnActivities, allCostDrivers, saveCostVariant }) {
-  const [taskDriverMapping, setTaskDriverMapping] = useState(costVariant.mappings || []);
+export default function VariantEditor({ costVariant,
+  bpmnActivities, allCostDrivers,
+  saveCostVariant, addCostVariant,
+  toasting }) {
+  const defaultFrequency = 15;
+  const minFrequency = 0;
+  const maxFrequency = 100;
+
+  const [isNewVariant, setIsNewVariant] = useState(costVariant.id ? false : true);
+  const [taskDriverMapping, setTaskDriverMapping] = useState(isNewVariant ? [] : costVariant.mappings);
   const [isVariantNameValid, setIsVariantNameValid] = useState(true);
+  const [variantName, setVariantName] = useState(isNewVariant ? '' : costVariant.name);
+  const [frequency, setFrequency] = useState(isNewVariant ? defaultFrequency : costVariant.frequency);
 
   const addNewTaskDriverMapping = () => {
     setTaskDriverMapping([...taskDriverMapping, { task: '', abstractDriver: '', concreteDriver: '' }]);
@@ -22,9 +32,13 @@ export default function VariantEditor({ costVariant, setCostVariant, bpmnActivit
 
   const updateVariantDetails = (field, value) => {
     if (field === 'name') {
-      setIsVariantNameValid(value.length > 0);
+      let isVariantNameValid = value.length > 0;
+      setIsVariantNameValid(isVariantNameValid);
+      setVariantName(value);
     }
-    setCostVariant({ ...costVariant, [field]: value });
+    else if (field === 'frequency') {
+      setFrequency(value);
+    }
   };
 
   const abstractDriverNames = Array.from(new Set(allCostDrivers.map(driver => driver.name)));
@@ -34,6 +48,20 @@ export default function VariantEditor({ costVariant, setCostVariant, bpmnActivit
     updatedMappings[index][field] = value;
     setTaskDriverMapping(updatedMappings);
   };
+
+  const saveVariantClicked = () => {
+    if (!variantName || taskDriverMapping.length === 0) {
+      toasting("error", "Invalid input", "Variant Name and Task-Abstract Driver mappings are required");
+      return;
+    }
+
+    addCostVariant({
+      ...costVariant,
+      mappings: taskDriverMapping,
+      name: variantName,
+      frequency: frequency
+    });
+  }
 
   return (
     <Card my={2}>
@@ -46,15 +74,17 @@ export default function VariantEditor({ costVariant, setCostVariant, bpmnActivit
           <Flex mt={2}>
             <Input
               placeholder="Variant Name"
-              value={costVariant.name}
+              value={variantName}
               onChange={(e) => updateVariantDetails('name', e.target.value)}
               isInvalid={!isVariantNameValid}
               errorBorderColor='red.300'
             />
             <NumberInput placeholder="Frequency"
-              value={costVariant.frequency}
-              defaultValue={15} min={0} max={100}
-              ml={3} onChange={(value) => updateVariantDetails('frequency', value)}>
+              value={frequency}
+              defaultValue={defaultFrequency} min={minFrequency} max={maxFrequency}
+              ml={3} 
+              onChange={(value) => updateVariantDetails('frequency', value)}
+              >
               <NumberInputField />
               <NumberInputStepper>
                 <NumberIncrementStepper />
@@ -62,7 +92,7 @@ export default function VariantEditor({ costVariant, setCostVariant, bpmnActivit
               </NumberInputStepper>
             </NumberInput>
             <Button
-              onClick={() => saveCostVariant({ ...costVariant, mappings: taskDriverMapping })}
+              onClick={saveVariantClicked}
               colorScheme='white'
               variant='outline'
               border='1px'
@@ -81,12 +111,17 @@ export default function VariantEditor({ costVariant, setCostVariant, bpmnActivit
                   <option value={activity.id} key={activity.id}>{activity.name}</option>
                 ))}
               </Select>
-              <Select placeholder="Select Abstract Driver" value={mapping.abstractDriver} onChange={(e) => updateMapping(index, 'abstractDriver', e.target.value)} mr={3}>
+              <Select
+                placeholder="Select Abstract Driver"
+                value={mapping.abstractDriver} onChange={(e) => updateMapping(index, 'abstractDriver', e.target.value)}
+                mr={3}>
                 {abstractDriverNames.map(name => (
                   <option value={name} key={name}>{name}</option>
                 ))}
               </Select>
-              <Select placeholder="Select Concrete Driver" value={mapping.concreteDriver} onChange={(e) => updateMapping(index, 'concreteDriver', e.target.value)}>
+              <Select placeholder="Select Concrete Driver"
+                value={mapping.concreteDriver}
+                onChange={(e) => updateMapping(index, 'concreteDriver', e.target.value)}>
                 {allCostDrivers
                   .find(driver => driver.name === mapping.abstractDriver)?.concreteCostDrivers
                   .map(concreteDriver => (
