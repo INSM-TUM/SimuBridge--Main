@@ -79,7 +79,7 @@ const LcaIntegration = ({ getData, toasting }) => {
 
       if (!abstractCostDriversMap.has(el.category)) {
         let abstractDriver = SimulationModelModdle.getInstance().create("simulationmodel:AbstractCostDriver", {
-          id: el.category, // Using category as the unique identifier
+          id: el.category,
           name: el.category,
           concreteCostDrivers: [concreteCostDriverConfig]
         });
@@ -111,7 +111,6 @@ const LcaIntegration = ({ getData, toasting }) => {
 
     setIsFetchingRunning(true);
 
-    // Make an API call using fetch
     let resp = await fetch(apiUrl, {
       method: "POST",
       timeout: 10000,
@@ -134,16 +133,14 @@ const LcaIntegration = ({ getData, toasting }) => {
       })
       .then(async (data) => {
         console.log('API Response:', data);
-        await processApiResponse(data);
         toasting("success", "Success", "Cost drivers fetched successfully");
-        // Handle the response as needed
+        await processApiResponse(data);
       })
       .catch((error) => {
         setIsFetchingRunning(false);
         toasting("error", "Error", "Please check if the OpenLCA IPC server is running and the URL is correct");
 
         console.error('API Error:', error);
-        // Handle errors as needed
       });
   };
 
@@ -182,7 +179,7 @@ const LcaIntegration = ({ getData, toasting }) => {
                   isInvalid={!isApiUrlValid}
                   errorBorderColor='red.300'
                   onChange={handleApiUrlChange}
-                  placeholder="e.g., http://localhost:8080"
+                  placeholder={'e.g., ' + defaultApiUrl}
                 />
                 <InputRightElement width='4.5rem' mr={2}>
                   <Button h='1.75rem' size='sm'

@@ -61,6 +61,7 @@ export const SimulationModelDescriptor = {
                 { "name": "timeTables", "type": "Timetable", isMany : true },
                 { "name": "costDrivers", "type": "AbstractCostDriver", isMany : true },
                 { "name": "environmentalCostDrivers", "type": "AbstractCostDriver", isMany : true},
+                { "name": "environmentMappingConfig", "type": "EnvironmentMappingConfig" },
                 { "name": "costVariantConfig", "type": "CostVariantConfig" }
             ]
         },
@@ -127,6 +128,30 @@ export const SimulationModelDescriptor = {
             "properties": [
                 { "name": "id", "type": "String"},
                 { "name": "name", "type": "String"}
+            ]
+        },
+
+        {
+            "name" : "EnvironmentMappingConfig",
+            "properties": [
+                { "name": "variants", "type": "VariantExtended", isMany : true },
+            ]
+        },
+        {
+            "name" : "VariantExtended",
+            "properties": [
+                { "name": "id", "type": "String"},
+                { "name": "name", "type": "String"},
+                { "name": "frequency", "type": "String"},
+                { "name": "mappings", "type": "DriverTaskMapping", isMany : true }
+            ]
+        },
+        {
+            "name" : "DriverTaskMapping",
+            "properties": [
+                { "name": "task", "type": "String"},
+                { "name": "abstractDriver", "type": "String"},
+                { "name": "concreteDriver", "type": "String"},
             ]
         },
 

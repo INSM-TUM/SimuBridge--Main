@@ -23,6 +23,14 @@ export default function VariantEditor({ costVariant,
   const [mappingValidations, setMappingValidations] = useState([]);
 
   useEffect(() => {
+    if (costVariant) {
+      setTaskDriverMapping(costVariant.mappings || []);
+      setVariantName(costVariant.name || '');
+      setFrequency(costVariant.frequency || defaultFrequency);
+    }
+  }, [costVariant]);
+
+  useEffect(() => {
     const initialValidations = taskDriverMapping.map(mapping => ({
       taskValid: !!mapping.task,
       abstractDriverValid: !!mapping.abstractDriver,

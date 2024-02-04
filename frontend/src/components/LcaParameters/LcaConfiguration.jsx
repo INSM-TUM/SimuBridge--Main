@@ -9,6 +9,8 @@ import { FiEdit, FiTrash2 } from 'react-icons/fi';
 import { v4 as uuidv4 } from 'uuid';
 import VariantEditor from './VariantEditor';
 
+import SimulationModelModdle, { assign, limitToDataScheme } from "simulation-bridge-datamodel/DataModel";
+
 function LcaConfiguration({ getData, toasting }) {
   const [variants, setVariants] = useState([]);
   const [currentVariant, setCurrentVariant] = useState({ name: '', mappings: [], frequency: 15 });
@@ -25,8 +27,10 @@ function LcaConfiguration({ getData, toasting }) {
       setAllCostDrivers(uniqueCostDrivers);
       setIsCostDriversLoaded(uniqueCostDrivers.length > 0);
 
-      if (scenario.costVariantConfig) {
-        setVariants(scenario.costVariantConfig.variants);
+      console.log('environmentMappingConfig:', scenario.resourceParameters.environmentMappingConfig.variants);
+      const environmentMappingConfig = scenario.resourceParameters.environmentMappingConfig;
+      if (environmentMappingConfig && environmentMappingConfig.variants) {
+        setVariants(environmentMappingConfig.variants);
       }
     }
 
@@ -40,7 +44,7 @@ function LcaConfiguration({ getData, toasting }) {
     }
   }, []);
 
-  const saveCostVariant = (variant) => {
+  const saveCostVariant = async (variant) => {
     const isExistingVariant = variant.id && variants.some(v => v.id === variant.id);
     if (!isExistingVariant) {
       variant.id = uuidv4();
@@ -49,20 +53,100 @@ function LcaConfiguration({ getData, toasting }) {
     updatedVariants.push(variant);
 
     setVariants(updatedVariants);
+
+    //save variants and its mappings
+    let driverTaskMappings = variant.mappings.map(mapping => {
+      return SimulationModelModdle.getInstance().create("simulationmodel:DriverTaskMapping", {
+        task: mapping.task,
+        abstractDriver: mapping.abstractDriver,
+        concreteDriver: mapping.concreteDriver,
+      });
+    });
+
+    let variantExtended = SimulationModelModdle.getInstance().create("simulationmodel:VariantExtended", {
+      id: variant.id,
+      name: variant.name,
+      frequency: variant.frequency,
+      mappings: driverTaskMappings,
+    });
+    let updatedVariantsObject = [...variants.filter(v => v.id !== variant.id), variantExtended];
+    const environmentMappingConfig =
+      SimulationModelModdle.getInstance().create("simulationmodel:EnvironmentMappingConfig", {
+        variants: updatedVariantsObject,
+      });
+    getData().getCurrentScenario().resourceParameters.environmentMappingConfig = environmentMappingConfig;
+    await getData().saveCurrentScenario();
+
+    //save CostVariantConfig for Team B
+    let costVariantConfig = SimulationModelModdle.getInstance().create("simulationmodel:CostVariantConfig", {
+      count: updatedVariants.length,
+      variants: [],
+    });
+
+    console.log('All cost drivers:', allCostDrivers);
+
+    updatedVariants.forEach(v => {
+      let drivers = [];
+      v.mappings.forEach(m => {
+        const concreteDriver = allCostDrivers
+          .flatMap(driver => driver.concreteCostDrivers)
+          .find(driver => driver.id === m.concreteDriver);
+        const driver = SimulationModelModdle.getInstance().create("simulationmodel:Driver", {
+          id: m.abstractDriver,
+          cost: concreteDriver ? concreteDriver.cost : 0,
+        });
+        drivers.push(driver);
+      });
+
+      console.log('Drivers:', drivers);
+      let costVariant = SimulationModelModdle.getInstance().create("simulationmodel:Variant", {
+        id: v.id,
+        name: v.name,
+        frequency: v.frequency,
+        drivers: drivers,
+      });
+      costVariantConfig.variants.push(costVariant);
+    });
+
+    console.log('CostVariantConfig:', costVariantConfig);
+    getData().getCurrentScenario().resourceParameters.CostVariantConfig = costVariantConfig;
+    await getData().saveCurrentScenario();
+
     setCurrentVariant({ name: '', mappings: [], frequency: 15 });
     toasting("success", "Variant saved", "Cost variant saved successfully");
   };
 
   const editVariant = (variant) => {
-    setCurrentVariant(variant);
+    setCurrentVariant({ ...variant });
   };
 
-  const deleteVariant = (variantId) => {
+  const deleteVariant = async (variantId) => {
     setVariants(variants.filter(v => v.id !== variantId));
-    toasting("info", "Variant deleted", "Cost variant deleted successfully");
     if (currentVariant.id === variantId) {
       setCurrentVariant({ name: '', mappings: [], frequency: 15 });
     }
+
+    //delete from configuration
+
+    const environmentMappingConfig = SimulationModelModdle.getInstance().create("simulationmodel:EnvironmentMappingConfig", {
+      variants: getData().getCurrentScenario()
+        .resourceParameters.environmentMappingConfig.variants.filter(v => v.id !== variantId),
+    });
+    getData().getCurrentScenario().resourceParameters.environmentMappingConfig = environmentMappingConfig;
+    await getData().saveCurrentScenario();
+
+    // Delete variant from CostVariantConfig for team B
+    let costVariantConfig = getData().getCurrentScenario().resourceParameters.costVariantConfig;
+    const updatedCostVariantConfig = { ...costVariantConfig };
+
+    updatedCostVariantConfig.variants = updatedCostVariantConfig.variants.filter(v => v.id !== variantId);
+    updatedCostVariantConfig.count = updatedCostVariantConfig.variants.length;
+    getData().getCurrentScenario().resourceParameters.CostVariantConfig = updatedCostVariantConfig;
+    await getData().saveCurrentScenario();
+
+    console.log('CostVariantConfig:', getData().getCurrentScenario().resourceParameters.CostVariantConfig);
+
+    toasting("info", "Variant deleted", "Cost variant deleted successfully");
   };
 
   return (
