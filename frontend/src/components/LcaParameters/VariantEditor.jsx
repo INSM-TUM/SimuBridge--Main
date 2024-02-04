@@ -1,37 +1,46 @@
 import React, { useState } from 'react';
 import {
-  Alert, AlertIcon, AlertDescription, CloseButton, useDisclosure,
-  Accordion, AccordionItem, AccordionButton, AccordionPanel, AccordionIcon,
-  Flex, Stack, Heading, Card, CardHeader, CardBody, Text,
-  Input, InputGroup, InputRightElement, InputLeftElement,
-  NumberInput, NumberInputField, NumberInputStepper, NumberIncrementStepper, NumberDecrementStepper,
-  Select, Button, Progress, Box, Spinner, useToast, UnorderedList, ListItem
+  Card, CardHeader, CardBody, Heading, Stack, Flex, Text,
+  Input, NumberInput, NumberInputField, NumberInputStepper, NumberIncrementStepper, NumberDecrementStepper,
+  Select, Button
 } from '@chakra-ui/react';
 
-export default function VariantEditor({ costVariant, bpmnActivities, allCostDrivers, saveCostVariant }) {
-  const [taskDriverMapping, setTaskDriverMapping] = useState([]);
+export default function VariantEditor({ costVariant, setCostVariant, bpmnActivities, allCostDrivers, saveCostVariant }) {
+  const [taskDriverMapping, setTaskDriverMapping] = useState(costVariant.mappings || []);
 
   const addNewTaskDriverMapping = () => {
-    setTaskDriverMapping([...taskDriverMapping, { task: null, abstractDriver: null, concreteDriver: null }]);
+    setTaskDriverMapping([...taskDriverMapping, { task: '', abstractDriver: '', concreteDriver: '' }]);
+  };
+
+  // Update costVariant name and frequency
+  const updateVariantDetails = (field, value) => {
+    setCostVariant({ ...costVariant, [field]: value });
   };
 
   // Extract unique abstract driver names from allCostDrivers
   const abstractDriverNames = Array.from(new Set(allCostDrivers.map(driver => driver.name)));
 
+  // Update mapping in taskDriverMapping
+  const updateMapping = (index, field, value) => {
+    const updatedMappings = [...taskDriverMapping];
+    updatedMappings[index][field] = value;
+    setTaskDriverMapping(updatedMappings);
+  };
+
   return (
     <Card my={2}>
       <CardHeader>
-        <Heading size='md'>{costVariant ? 'Edit' : 'Add'} Variant</Heading>
+        <Heading size='md'>{costVariant.name ? 'Edit' : 'Add'} Variant</Heading>
       </CardHeader>
       <CardBody>
         <Stack>
           <Text>Please specify variant name and frequency</Text>
           <Flex mt={2}>
-            <Input placeholder="Variant Name" value={costVariant.id} />
+            <Input placeholder="Variant Name" value={costVariant.name} onChange={(e) => updateVariantDetails('name', e.target.value)} />
             <NumberInput placeholder="Frequency"
               value={costVariant.frequency}
               defaultValue={15} min={0} max={100}
-              ml={3}>
+              ml={3} onChange={(value) => updateVariantDetails('frequency', value)}>
               <NumberInputField />
               <NumberInputStepper>
                 <NumberIncrementStepper />
@@ -39,7 +48,7 @@ export default function VariantEditor({ costVariant, bpmnActivities, allCostDriv
               </NumberInputStepper>
             </NumberInput>
             <Button
-              onClick={() => saveCostVariant(costVariant)}
+              onClick={() => saveCostVariant({...costVariant, mappings: taskDriverMapping})}
               colorScheme='white'
               variant='outline'
               border='1px'
@@ -52,26 +61,17 @@ export default function VariantEditor({ costVariant, bpmnActivities, allCostDriv
           {taskDriverMapping.map((mapping, index) => (
             <Flex key={index} mt={3} alignItems="center">
               <Text mr={3}>{index + 1}.</Text>
-              <Select placeholder="Select Task" value={mapping.task} onChange={(e) => {
-                const newMapping = { ...mapping, task: e.target.value };
-                setTaskDriverMapping(taskDriverMapping.map((m, idx) => idx === index ? newMapping : m));
-              }} mr={3}>
+              <Select placeholder="Select Task" value={mapping.task} onChange={(e) => updateMapping(index, 'task', e.target.value)} mr={3}>
                 {bpmnActivities.map((activity) => (
                   <option value={activity.id} key={activity.id}>{activity.name}</option>
                 ))}
               </Select>
-              <Select placeholder="Select Abstract Driver" value={mapping.abstractDriver} onChange={(e) => {
-                const newMapping = { ...mapping, abstractDriver: e.target.value, concreteDriver: null };
-                setTaskDriverMapping(taskDriverMapping.map((m, idx) => idx === index ? newMapping : m));
-              }} mr={3}>
+              <Select placeholder="Select Abstract Driver" value={mapping.abstractDriver} onChange={(e) => updateMapping(index, 'abstractDriver', e.target.value)} mr={3}>
                 {abstractDriverNames.map(name => (
                   <option value={name} key={name}>{name}</option>
                 ))}
               </Select>
-              <Select placeholder="Select Concrete Driver" value={mapping.concreteDriver} onChange={(e) => {
-                const newMapping = { ...mapping, concreteDriver: e.target.value };
-                setTaskDriverMapping(taskDriverMapping.map((m, idx) => idx === index ? newMapping : m));
-              }}>
+              <Select placeholder="Select Concrete Driver" value={mapping.concreteDriver} onChange={(e) => updateMapping(index, 'concreteDriver', e.target.value)}>
                 {allCostDrivers
                   .find(driver => driver.name === mapping.abstractDriver)?.concreteCostDrivers
                   .map(concreteDriver => (

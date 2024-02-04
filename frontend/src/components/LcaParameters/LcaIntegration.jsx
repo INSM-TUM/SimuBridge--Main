@@ -211,15 +211,15 @@ const LcaIntegration = ({ getData, toasting }) => {
             {isFetchingRunning && <Progress mt={2} colorScheme='green' size='xs' isIndeterminate />}
           </CardBody>
         </Card>
-        
-        { !isCostDriversLoaded && isAlertBoxVisible &&
+
+        {!isCostDriversLoaded && isAlertBoxVisible &&
           <Alert status='warning' mt={2} display='flex' alignItems='center' justifyContent='space-between'>
             <Flex alignItems='center'>
-                <AlertIcon />
-                <AlertDescription>There are no cost drivers saved in the system. Use the window above to fetch.</AlertDescription>
+              <AlertIcon />
+              <AlertDescription>There are no cost drivers saved in the system. Use the window above to fetch.</AlertDescription>
             </Flex>
             <CloseButton position='relative' onClick={onClose} />
-        </Alert>
+          </Alert>
         }
         {isCostDriversLoaded &&
           <Card mt={2}>
