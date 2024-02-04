@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import {
-  Box, Heading, Card, CardHeader, CardBody, Button, Flex, Text, useToast,
-  Alert, AlertIcon, AlertDescription, CloseButton, Link
+  Box, Heading, Card, CardHeader, CardBody, Button, Flex, Text,
+  Alert, AlertIcon, AlertDescription, CloseButton, Link,
+  Accordion, AccordionItem, AccordionPanel, AccordionButton
 } from '@chakra-ui/react';
 import { useDisclosure } from '@chakra-ui/hooks';
 import VariantEditor from './VariantEditor';
@@ -95,13 +96,51 @@ function LcaConfiguration({ getData, toasting }) {
           <Heading size='md'>Saved Variants (Total: {variants.length})</Heading>
         </CardHeader>
         <CardBody>
-          {variants.map(variant => (
-            <Flex key={variant.name} alignItems="center" justifyContent="space-between" mb={2}>
-              <Text>{variant.name}</Text>
-              <Button onClick={() => editVariant(variant)} colorScheme="blue" mr={2}>Edit</Button>
-              <Button onClick={() => deleteVariant(variant.name)} colorScheme="red">Delete</Button>
-            </Flex>
-          ))}
+          <Accordion allowMultiple>
+            {variants.map((variant, index) => (
+              <AccordionItem key={index}>
+                <h2>
+                  <AccordionButton>
+                    <Box flex="1" textAlign="left">
+                      <Text fontSize="lg" fontWeight="bold">
+                        {variant.name}
+                      </Text>
+                    </Box>
+                    <Button
+                      colorScheme='white'
+                      variant='outline'
+                      border='1px'
+                      borderColor='#B4C7C9'
+                      color='#6E6E6F'
+                      _hover={{ bg: '#B4C7C9' }}
+                      onClick={() => editVariant(variant)}
+                    >Edit</Button>
+                    <Button
+                      colorScheme='white'
+                      variant='outline'
+                      border='1px'
+                      borderColor='#B4C7C9'
+                      color='#6E6E6F'
+                      _hover={{ bg: '#B4C7C9' }}
+                      ml={2}
+                      onClick={() => deleteVariant(variant.name)}
+                    >Delete</Button>
+                  </AccordionButton>
+                </h2>
+                <AccordionPanel pb={4}>
+                  <Text fontSize="lg" fontWeight="bold">Frequency: {variant.frequency} days</Text>
+                  <Text fontSize="lg" fontWeight="bold">Mappings:</Text>
+                  <Flex>
+                    {variant.mappings.map((mapping, index) => (
+                      <Box key={index} mr={3}>
+                        <Text>{index + 1}. {bpmnActivities.find(activity => activity.id === mapping.task)?.name} - {mapping.abstractDriver} - {allCostDrivers.find(driver => driver.name === mapping.abstractDriver)?.concreteCostDrivers.find(concreteDriver => concreteDriver.id === mapping.concreteDriver)?.name}</Text>
+                      </Box>
+                    ))}
+                  </Flex>
+                </AccordionPanel>
+              </AccordionItem>
+            ))}
+          </Accordion>  
         </CardBody>
       </Card>
       <VariantEditor

@@ -7,20 +7,21 @@ import {
 
 export default function VariantEditor({ costVariant, setCostVariant, bpmnActivities, allCostDrivers, saveCostVariant }) {
   const [taskDriverMapping, setTaskDriverMapping] = useState(costVariant.mappings || []);
+  const [isVariantNameValid, setIsVariantNameValid] = useState(true);
 
   const addNewTaskDriverMapping = () => {
     setTaskDriverMapping([...taskDriverMapping, { task: '', abstractDriver: '', concreteDriver: '' }]);
   };
 
-  // Update costVariant name and frequency
   const updateVariantDetails = (field, value) => {
+    if (field === 'name') {
+      setIsVariantNameValid(value.length > 0);
+    }
     setCostVariant({ ...costVariant, [field]: value });
   };
 
-  // Extract unique abstract driver names from allCostDrivers
   const abstractDriverNames = Array.from(new Set(allCostDrivers.map(driver => driver.name)));
 
-  // Update mapping in taskDriverMapping
   const updateMapping = (index, field, value) => {
     const updatedMappings = [...taskDriverMapping];
     updatedMappings[index][field] = value;
@@ -36,7 +37,13 @@ export default function VariantEditor({ costVariant, setCostVariant, bpmnActivit
         <Stack>
           <Text>Please specify variant name and frequency</Text>
           <Flex mt={2}>
-            <Input placeholder="Variant Name" value={costVariant.name} onChange={(e) => updateVariantDetails('name', e.target.value)} />
+            <Input 
+              placeholder="Variant Name"
+              value={costVariant.name}
+              onChange={(e) => updateVariantDetails('name', e.target.value)}
+              isInvalid={!isVariantNameValid}
+              errorBorderColor='red.300'
+               />
             <NumberInput placeholder="Frequency"
               value={costVariant.frequency}
               defaultValue={15} min={0} max={100}
