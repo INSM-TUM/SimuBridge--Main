@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Card, CardHeader, CardBody, Heading, Stack, Flex, Text,
   Input, NumberInput, NumberInputField, NumberInputStepper, NumberIncrementStepper, NumberDecrementStepper,
@@ -9,7 +9,7 @@ import { AiOutlineMinusCircle } from 'react-icons/ai';
 
 export default function VariantEditor({ costVariant,
   bpmnActivities, allCostDrivers,
-  saveCostVariant, addCostVariant,
+  saveCostVariant,
   toasting }) {
   const defaultFrequency = 15;
   const minFrequency = 0;
@@ -20,6 +20,16 @@ export default function VariantEditor({ costVariant,
   const [isVariantNameValid, setIsVariantNameValid] = useState(true);
   const [variantName, setVariantName] = useState(isNewVariant ? '' : costVariant.name);
   const [frequency, setFrequency] = useState(isNewVariant ? defaultFrequency : costVariant.frequency);
+  const [mappingValidations, setMappingValidations] = useState([]);
+
+  useEffect(() => {
+    const initialValidations = taskDriverMapping.map(mapping => ({
+      taskValid: !!mapping.task,
+      abstractDriverValid: !!mapping.abstractDriver,
+      concreteDriverValid: !!mapping.concreteDriver
+    }));
+    setMappingValidations(initialValidations);
+  }, [taskDriverMapping]);
 
   const addNewTaskDriverMapping = () => {
     setTaskDriverMapping([...taskDriverMapping, { task: '', abstractDriver: '', concreteDriver: '' }]);
@@ -47,15 +57,22 @@ export default function VariantEditor({ costVariant,
     const updatedMappings = [...taskDriverMapping];
     updatedMappings[index][field] = value;
     setTaskDriverMapping(updatedMappings);
+
+    const updatedValidations = [...mappingValidations];
+    updatedValidations[index][`${field}Valid`] = !!value;
+    setMappingValidations(updatedValidations);
   };
 
   const saveVariantClicked = () => {
-    if (!variantName || taskDriverMapping.length === 0) {
-      toasting("error", "Invalid input", "Variant Name and Task-Abstract Driver mappings are required");
+    const allMappingsValid = mappingValidations.every(validation =>
+      validation.taskValid && validation.abstractDriverValid && validation.concreteDriverValid);
+
+    if (!variantName || taskDriverMapping.length === 0 || !allMappingsValid) {
+      toasting("error", "Invalid input", "All fields are required and must be valid.");
       return;
     }
 
-    addCostVariant({
+    saveCostVariant({
       ...costVariant,
       mappings: taskDriverMapping,
       name: variantName,
@@ -67,6 +84,9 @@ export default function VariantEditor({ costVariant,
     <Card my={2}>
       <CardHeader>
         <Heading size='md'>{costVariant.name ? 'Edit' : 'Add'} Variant</Heading>
+        <Text fontSize='sm' color='gray.500' mt={1}>
+          {costVariant.id && `ID: ${costVariant.id}`}
+        </Text>
       </CardHeader>
       <CardBody>
         <Stack>
@@ -82,9 +102,9 @@ export default function VariantEditor({ costVariant,
             <NumberInput placeholder="Frequency"
               value={frequency}
               defaultValue={defaultFrequency} min={minFrequency} max={maxFrequency}
-              ml={3} 
+              ml={3}
               onChange={(value) => updateVariantDetails('frequency', value)}
-              >
+            >
               <NumberInputField />
               <NumberInputStepper>
                 <NumberIncrementStepper />
@@ -106,14 +126,23 @@ export default function VariantEditor({ costVariant,
           {taskDriverMapping.map((mapping, index) => (
             <Flex key={index} mt={3} alignItems="center">
               <Text mr={3}>{index + 1}.</Text>
-              <Select placeholder="Select Task" value={mapping.task} onChange={(e) => updateMapping(index, 'task', e.target.value)} mr={3}>
+              <Select
+                placeholder="Select Task"
+                value={mapping.task}
+                onChange={(e) => updateMapping(index, 'task', e.target.value)}
+                isInvalid={!mappingValidations[index]?.taskValid}
+                errorBorderColor='red.300'
+                mr={3}>
                 {bpmnActivities.map((activity) => (
                   <option value={activity.id} key={activity.id}>{activity.name}</option>
                 ))}
               </Select>
               <Select
                 placeholder="Select Abstract Driver"
-                value={mapping.abstractDriver} onChange={(e) => updateMapping(index, 'abstractDriver', e.target.value)}
+                value={mapping.abstractDriver}
+                onChange={(e) => updateMapping(index, 'abstractDriver', e.target.value)}
+                isInvalid={!mappingValidations[index]?.taskValid}
+                errorBorderColor='red.300'
                 mr={3}>
                 {abstractDriverNames.map(name => (
                   <option value={name} key={name}>{name}</option>
@@ -121,7 +150,10 @@ export default function VariantEditor({ costVariant,
               </Select>
               <Select placeholder="Select Concrete Driver"
                 value={mapping.concreteDriver}
-                onChange={(e) => updateMapping(index, 'concreteDriver', e.target.value)}>
+                onChange={(e) => updateMapping(index, 'concreteDriver', e.target.value)}
+                isInvalid={!mappingValidations[index]?.taskValid}
+                errorBorderColor='red.300'
+              >
                 {allCostDrivers
                   .find(driver => driver.name === mapping.abstractDriver)?.concreteCostDrivers
                   .map(concreteDriver => (

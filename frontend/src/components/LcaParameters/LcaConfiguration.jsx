@@ -6,6 +6,7 @@ import {
   Accordion, AccordionItem, AccordionPanel, AccordionButton
 } from '@chakra-ui/react';
 import { FiEdit, FiTrash2 } from 'react-icons/fi';
+import { v4 as uuidv4 } from 'uuid';
 import VariantEditor from './VariantEditor';
 
 function LcaConfiguration({ getData, toasting }) {
@@ -39,18 +40,16 @@ function LcaConfiguration({ getData, toasting }) {
     }
   }, []);
 
-  const addCostVariant = (variant) => {
-    const updatedVariants = [...variants];
-    const variantIndex = variants.findIndex(v => v.name === variant.name);
-
-    if (variantIndex >= 0) {
-      updatedVariants[variantIndex] = variant; // Update existing variant
-    } else {
-      updatedVariants.push(variant); // Add new variant
+  const saveCostVariant = (variant) => {
+    const isExistingVariant = variant.id && variants.some(v => v.id === variant.id);
+    if (!isExistingVariant) {
+      variant.id = uuidv4();
     }
+    const updatedVariants = variants.filter(v => v.id !== variant.id);
+    updatedVariants.push(variant);
 
     setVariants(updatedVariants);
-    setCurrentVariant({ name: '', mappings: [], frequency: 15 }); // Reset currentVariant
+    setCurrentVariant({ name: '', mappings: [], frequency: 15 });
     toasting("success", "Variant saved", "Cost variant saved successfully");
   };
 
@@ -58,10 +57,10 @@ function LcaConfiguration({ getData, toasting }) {
     setCurrentVariant(variant);
   };
 
-  const deleteVariant = (variantName) => {
-    setVariants(variants.filter(v => v.name !== variantName));
+  const deleteVariant = (variantId) => {
+    setVariants(variants.filter(v => v.id !== variantId));
     toasting("info", "Variant deleted", "Cost variant deleted successfully");
-    if (currentVariant.name === variantName) {
+    if (currentVariant.id === variantId) {
       setCurrentVariant({ name: '', mappings: [], frequency: 15 });
     }
   };
@@ -111,7 +110,7 @@ function LcaConfiguration({ getData, toasting }) {
                           color='#6E6E6F'
                           _hover={{ bg: '#B4C7C9' }}
                           ml={2}
-                          onClick={() => deleteVariant(variant.name)}
+                          onClick={() => deleteVariant(variant.id)}
                           leftIcon={<FiTrash2 />}
                         >Delete</Button>
                       </AccordionButton>
@@ -140,8 +139,7 @@ function LcaConfiguration({ getData, toasting }) {
             costVariant={currentVariant}
             bpmnActivities={bpmnActivities}
             allCostDrivers={allCostDrivers}
-            saveCostVariant={editVariant}
-            addCostVariant={addCostVariant}
+            saveCostVariant={saveCostVariant}
             toasting={toasting}
           />
         </Box>}
