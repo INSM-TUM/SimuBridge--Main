@@ -2,8 +2,10 @@ import React, { useState } from 'react';
 import {
   Card, CardHeader, CardBody, Heading, Stack, Flex, Text,
   Input, NumberInput, NumberInputField, NumberInputStepper, NumberIncrementStepper, NumberDecrementStepper,
-  Select, Button
+  Select, Button, IconButton
 } from '@chakra-ui/react';
+import { FiSave } from 'react-icons/fi';
+import { AiOutlineMinusCircle } from 'react-icons/ai';
 
 export default function VariantEditor({ costVariant, setCostVariant, bpmnActivities, allCostDrivers, saveCostVariant }) {
   const [taskDriverMapping, setTaskDriverMapping] = useState(costVariant.mappings || []);
@@ -11,6 +13,11 @@ export default function VariantEditor({ costVariant, setCostVariant, bpmnActivit
 
   const addNewTaskDriverMapping = () => {
     setTaskDriverMapping([...taskDriverMapping, { task: '', abstractDriver: '', concreteDriver: '' }]);
+  };
+
+  const removeTaskDriverMapping = (index) => {
+    const updatedMappings = taskDriverMapping.filter((_, idx) => idx !== index);
+    setTaskDriverMapping(updatedMappings);
   };
 
   const updateVariantDetails = (field, value) => {
@@ -37,13 +44,13 @@ export default function VariantEditor({ costVariant, setCostVariant, bpmnActivit
         <Stack>
           <Text>Please specify variant name and frequency</Text>
           <Flex mt={2}>
-            <Input 
+            <Input
               placeholder="Variant Name"
               value={costVariant.name}
               onChange={(e) => updateVariantDetails('name', e.target.value)}
               isInvalid={!isVariantNameValid}
               errorBorderColor='red.300'
-               />
+            />
             <NumberInput placeholder="Frequency"
               value={costVariant.frequency}
               defaultValue={15} min={0} max={100}
@@ -55,7 +62,7 @@ export default function VariantEditor({ costVariant, setCostVariant, bpmnActivit
               </NumberInputStepper>
             </NumberInput>
             <Button
-              onClick={() => saveCostVariant({...costVariant, mappings: taskDriverMapping})}
+              onClick={() => saveCostVariant({ ...costVariant, mappings: taskDriverMapping })}
               colorScheme='white'
               variant='outline'
               border='1px'
@@ -63,7 +70,8 @@ export default function VariantEditor({ costVariant, setCostVariant, bpmnActivit
               color='#6E6E6F'
               ml={3}
               _hover={{ bg: '#B4C7C9' }}
-            >Save</Button>
+              leftIcon={<FiSave />}
+            >{costVariant.name ? 'Edit' : 'Add'}</Button>
           </Flex>
           {taskDriverMapping.map((mapping, index) => (
             <Flex key={index} mt={3} alignItems="center">
@@ -85,6 +93,15 @@ export default function VariantEditor({ costVariant, setCostVariant, bpmnActivit
                     <option value={concreteDriver.id} key={concreteDriver.id}>{concreteDriver.name}</option>
                   ))}
               </Select>
+              <IconButton
+                aria-label="Remove mapping"
+                icon={<AiOutlineMinusCircle />}
+                isRound={true}
+                ml={2}
+                colorScheme="teal"
+                variant="outline"
+                onClick={() => removeTaskDriverMapping(index)}
+              />
             </Flex>
           ))}
           <Button

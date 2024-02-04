@@ -2,15 +2,15 @@ import React, { useState, useEffect } from 'react';
 import {
   Box, Heading, Card, CardHeader, CardBody, Button, Flex, Text,
   Alert, AlertIcon, AlertDescription, CloseButton, Link,
+  UnorderedList, ListItem,
   Accordion, AccordionItem, AccordionPanel, AccordionButton
 } from '@chakra-ui/react';
-import { useDisclosure } from '@chakra-ui/hooks';
+import { FiEdit, FiTrash2 } from 'react-icons/fi';
 import VariantEditor from './VariantEditor';
 
 function LcaConfiguration({ getData, toasting }) {
-  const { isOpen, onClose, onOpen } = useDisclosure();
   const [variants, setVariants] = useState([]);
-  const [currentVariant, setCurrentVariant] = useState({ name: '', mappings: [] });
+  const [currentVariant, setCurrentVariant] = useState({ name: '', mappings: [], frequency: 15 });
   const [allCostDrivers, setAllCostDrivers] = useState([]);
   const [bpmnActivities, setBpmnActivities] = useState([]);
   const [isCostDriversLoaded, setIsCostDriversLoaded] = useState(false);
@@ -49,13 +49,13 @@ function LcaConfiguration({ getData, toasting }) {
     const variantIndex = variants.findIndex(v => v.name === variant.name);
 
     if (variantIndex >= 0) {
-      updatedVariants[variantIndex] = variant;
+      updatedVariants[variantIndex] = variant; // Update existing variant
     } else {
-      updatedVariants.push(variant);
+      updatedVariants.push(variant); // Add new variant
     }
 
     setVariants(updatedVariants);
-    setCurrentVariant({ name: '', mappings: [] });
+    setCurrentVariant({ name: '', mappings: [], frequency: 15 }); // Reset currentVariant
     toasting("success", "Variant saved", "Cost variant saved successfully");
   };
 
@@ -66,30 +66,13 @@ function LcaConfiguration({ getData, toasting }) {
   const deleteVariant = (variantName) => {
     setVariants(variants.filter(v => v.name !== variantName));
     toasting("info", "Variant deleted", "Cost variant deleted successfully");
+    if (currentVariant.name === variantName) {
+      setCurrentVariant({ name: '', mappings: [], frequency: 15 });
+    }
   };
 
   return (
-    !isCostDriversLoaded ? 
-    (
-      <Alert status='warning' mt={2} display='flex' alignItems='center' justifyContent='space-between'>
-            <Flex alignItems='center'>
-                <AlertIcon />
-                <AlertDescription>There are no cost drivers saved in the system. Use
-                      <Button as={Link} to="/lcaintegration"
-                            colorScheme='#ECF4F4'
-                            variant='outline'
-                            border='1px'
-                            borderColor='#B4C7C9'
-                            color='#6E6E6F'
-                            onClick={onOpen}
-                            _hover={{bg: '#B4C7C9'}}>
-                        OpenLCA Integration page
-                    </Button> to fetch cost drivers.</AlertDescription>
-            </Flex>
-            <CloseButton position='relative' onClick={onClose} />
-        </Alert>
-    ) :
-    (<Box>
+    <Box>
       <Heading size='lg'>Environmental Configuration for {getData().getCurrentScenario().scenarioName}</Heading>
       <Card my={2}>
         <CardHeader>
@@ -114,6 +97,7 @@ function LcaConfiguration({ getData, toasting }) {
                       color='#6E6E6F'
                       _hover={{ bg: '#B4C7C9' }}
                       onClick={() => editVariant(variant)}
+                      leftIcon={<FiEdit />}
                     >Edit</Button>
                     <Button
                       colorScheme='white'
@@ -124,19 +108,24 @@ function LcaConfiguration({ getData, toasting }) {
                       _hover={{ bg: '#B4C7C9' }}
                       ml={2}
                       onClick={() => deleteVariant(variant.name)}
+                      leftIcon={<FiTrash2 />}
                     >Delete</Button>
                   </AccordionButton>
                 </h2>
                 <AccordionPanel pb={4}>
-                  <Text fontSize="lg" fontWeight="bold">Frequency: {variant.frequency} days</Text>
+                  <Text fontSize="lg" fontWeight="bold">Frequency: {variant.frequency}</Text>
                   <Text fontSize="lg" fontWeight="bold">Mappings:</Text>
-                  <Flex>
-                    {variant.mappings.map((mapping, index) => (
-                      <Box key={index} mr={3}>
-                        <Text>{index + 1}. {bpmnActivities.find(activity => activity.id === mapping.task)?.name} - {mapping.abstractDriver} - {allCostDrivers.find(driver => driver.name === mapping.abstractDriver)?.concreteCostDrivers.find(concreteDriver => concreteDriver.id === mapping.concreteDriver)?.name}</Text>
-                      </Box>
+                  <UnorderedList>
+                    {variant.mappings.map((mapping, mappingIndex) => (
+                      <ListItem key={mappingIndex}>
+                        {bpmnActivities.find(activity => activity.id === mapping.task)?.name}{" - "}
+                        {mapping.abstractDriver}{" - "}
+                        {allCostDrivers.find(driver => driver.name === mapping.abstractDriver)
+                          ?.concreteCostDrivers.find(concreteDriver => concreteDriver.id === mapping.concreteDriver)
+                          ?.name}
+                      </ListItem>
                     ))}
-                  </Flex>
+                  </UnorderedList>
                 </AccordionPanel>
               </AccordionItem>
             ))}
@@ -150,7 +139,7 @@ function LcaConfiguration({ getData, toasting }) {
         allCostDrivers={allCostDrivers}
         saveCostVariant={saveCostVariant}
       />
-    </Box>)
+    </Box>
   );
 }
 
