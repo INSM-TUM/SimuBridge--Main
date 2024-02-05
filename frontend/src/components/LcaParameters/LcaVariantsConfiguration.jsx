@@ -24,14 +24,17 @@ function LcaVariantsConfiguration({ getData, toasting }) {
 
     if (scenario) {
       const costDrivers = scenario.resourceParameters.environmentalCostDrivers;
-      const uniqueCostDrivers = Array.from(new Map(costDrivers.map(item => [item.id, item])).values());
-      setAllCostDrivers(uniqueCostDrivers);
-      setIsCostDriversLoaded(uniqueCostDrivers.length > 0);
 
-      console.log('environmentMappingConfig:', scenario.resourceParameters.environmentMappingConfig.variants);
-      const environmentMappingConfig = scenario.resourceParameters.environmentMappingConfig;
-      if (environmentMappingConfig && environmentMappingConfig.variants) {
-        setVariants(environmentMappingConfig.variants);
+      if(costDrivers)
+      {
+        const uniqueCostDrivers = Array.from(new Map(costDrivers.map(item => [item.id, item])).values());
+        setAllCostDrivers(uniqueCostDrivers);
+        setIsCostDriversLoaded(uniqueCostDrivers.length > 0);
+      }
+
+      if(scenario.resourceParameters.environmentMappingConfig && scenario.resourceParameters.environmentMappingConfig.variants)
+      {
+        setVariants(scenario.resourceParameters.environmentMappingConfig.variants);
       }
     }
   }, []);
@@ -74,7 +77,7 @@ function LcaVariantsConfiguration({ getData, toasting }) {
             <AlertIcon />
             <AlertDescription>Cost drivers are not loaded. Please load the cost drivers from the OpenLCA server.</AlertDescription>
           </Flex>
-          
+
           <Link href='/lcaintegration' color='blue.500'>Load cost drivers</Link>
         </Alert> :
         <Box>
