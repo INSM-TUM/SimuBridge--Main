@@ -37,9 +37,11 @@ const LcaIntegration = ({ getData, toasting }) => {
 
     if (scenario) {
       const costDrivers = scenario.resourceParameters.environmentalCostDrivers;
-      const uniqueCostDrivers = Array.from(new Map(costDrivers.map(item => [item.id, item])).values());
-      setAllCostDrivers(uniqueCostDrivers);
-      setIsCostDriversLoaded(uniqueCostDrivers.length > 0);
+      if (costDrivers) {
+        const uniqueCostDrivers = Array.from(new Map(costDrivers.map(item => [item.id, item])).values());
+        setAllCostDrivers(uniqueCostDrivers);
+        setIsCostDriversLoaded(uniqueCostDrivers.length > 0);
+      }
     }
   }, []);
 

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import {
   Card, CardHeader, CardBody, Heading, Stack, Flex, Text,
+  FormControl, FormLabel,
   Input, NumberInput, NumberInputField, NumberInputStepper, NumberIncrementStepper, NumberDecrementStepper,
   Select, Button, IconButton, VStack
 } from '@chakra-ui/react';
@@ -124,7 +125,8 @@ export default function VariantEditor({ costVariant, allCostDrivers, saveCostVar
               isInvalid={!isVariantNameValid}
               errorBorderColor='red.300'
             />
-            <NumberInput placeholder="Frequency"
+            <NumberInput
+              placeholder="Frequency"
               value={frequency}
               defaultValue={defaultFrequency} min={minFrequency} max={maxFrequency}
               ml={3}
@@ -196,7 +198,7 @@ export default function VariantEditor({ costVariant, allCostDrivers, saveCostVar
             _hover={{ bg: '#B4C7C9' }}
             mt={2}
           >
-            Add Driver Mapping
+            Add Driver Concretization
           </Button>
         </Stack>
       </CardBody>

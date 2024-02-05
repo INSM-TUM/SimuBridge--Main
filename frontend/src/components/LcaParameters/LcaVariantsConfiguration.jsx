@@ -72,8 +72,9 @@ function LcaVariantsConfiguration({ getData, toasting }) {
         <Alert status='warning' mt={2} display='flex' alignItems='center' justifyContent='space-between'>
           <Flex alignItems='center'>
             <AlertIcon />
-            <AlertDescription>Cost drivers are not loaded. Please load the cost drivers from the OLCA server.</AlertDescription>
+            <AlertDescription>Cost drivers are not loaded. Please load the cost drivers from the OpenLCA server.</AlertDescription>
           </Flex>
+          
           <Link href='/lcaintegration' color='blue.500'>Load cost drivers</Link>
         </Alert> :
         <Box>
