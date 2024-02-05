@@ -1,4 +1,6 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useEffect } from "react";
+import { processApiResponse, handleButtonClick } from './LcaIntegrationUtils';
+
 import {
   Alert, AlertIcon, AlertDescription, CloseButton, useDisclosure,
   Accordion, AccordionItem, AccordionButton, AccordionPanel, AccordionIcon,
@@ -11,16 +13,11 @@ import {
   Progress,
   Box,
   Spinner,
-  useToast,
   UnorderedList, ListItem
 } from '@chakra-ui/react';
 
-import * as o from "olca-ipc";
-
 import { ExternalLinkIcon } from '@chakra-ui/icons';
 import "./styles.css"
-
-import SimulationModelModdle, { assign, limitToDataScheme } from "simulation-bridge-datamodel/DataModel";
 
 const LcaIntegration = ({ getData, toasting }) => {
   //vars
@@ -62,99 +59,18 @@ const LcaIntegration = ({ getData, toasting }) => {
     setIsApiUrlValid(true);
   };
 
-  const processApiResponse = async (client, data) => {
-    const impactMethod = await client.get(
-      o.RefType.ImpactMethod,
-      { id: impactMethodId, refType: o.RefType.ImpactMethod })
-    let e = impactMethod.nwSets
+  const processApiResponseBound = async (client, data) => {
+    await processApiResponse(client, data, 
+      getData, setFetchingProgress, toasting,
+      impactMethodId, setAllCostDrivers, setIsCostDriversLoaded);
+};
 
-    var abstractCostDriversMap = new Map();
-    for(const el of data)
-    {
-      console.log('Element:', el);
-      let calcSetup = await o.CalculationSetup.of({
-        target: el,
-        impactMethod: impactMethod,
-        nwSet: e[0],
-        allocation: o.AllocationType.USE_DEFAULT_ALLOCATION,
-        withCosts: false,
-        withRegionalization: false
-      });
-      console.log('Calculation Setup:', calcSetup);
-
-      const result = await client?.calculate(calcSetup);
-      if (!result) {
-        console.log("calculation failed: no result retrieved");
-      }
-      const s = await result.untilReady();
-      if (s.error) {
-        console.log(s.error);
-      } 
-      
-      console.log('Result:', result);
-      const weight = await result.getWeightedImpacts();
-      console.log('Weight:', weight);
-      const impactSum = weight.map(i => i.amount || 0).reduce((sum, current) => sum + current, 0);
-      console.log('Impact Sum:', impactSum);
-
-      let concreteCostDriverConfig = SimulationModelModdle.getInstance().create("simulationmodel:ConcreteCostDriver", {
-        id: el.id,
-        name: el.name,
-        cost: impactSum,
-      });
-
-      if (!abstractCostDriversMap.has(el.category)) {
-        let abstractDriver = SimulationModelModdle.getInstance().create("simulationmodel:AbstractCostDriver", {
-          id: el.category,
-          name: el.category,
-          concreteCostDrivers: [concreteCostDriverConfig]
-        });
-        abstractCostDriversMap.set(el.category, abstractDriver);
-      } else {
-        let abstractDriver = abstractCostDriversMap.get(el.category);
-        abstractDriver.concreteCostDrivers.push(concreteCostDriverConfig);
-      }
-
-      setFetchingProgress((data.indexOf(el) + 1) / data.length * 100);
-    }
-
-    const abstractCostDrivers = Array.from(abstractCostDriversMap.values());
-
-    getData().getCurrentScenario().resourceParameters.environmentalCostDrivers = abstractCostDrivers;
-
-    console.log('Abstract Cost Drivers:', abstractCostDrivers);
-    console.log('Resource Parameters:', getData().getCurrentScenario().resourceParameters);
-
-    await getData().saveCurrentScenario();
-    toasting("success", "Success", "Cost drivers were successfully saved to the application");
-    setAllCostDrivers(abstractCostDrivers);
-    setIsCostDriversLoaded(true);
-  };
-
-  const handleButtonClick = async () => {
-    if (!isApiUrlValid) {
-      toasting("error", "Invalid URL", "Please enter a valid URL in the format 'http://[host]:[port]'");
-      return;
-    }
-
-    setIsFetchingRunning(true);
-
-    try {
-      const client = new o.IpcClient.on(apiUrl);
-      const systems = await client.getDescriptors(o.RefType.ProductSystem);
-      console.log('Systems:', systems);
-
-      toasting("success", "Success", "Cost drivers fetched successfully");
-      await processApiResponse(client, systems);
-
-      setIsFetchingRunning(false);
-    }
-    catch (error) {
-      setIsFetchingRunning(false);
-      toasting("error", "Error", "Please check if the OpenLCA IPC server is running and the URL is correct");
-      console.error('API Error:', error);
-    }
-  };
+const handleButtonClickBound = async () => {
+    await handleButtonClick(apiUrl, isApiUrlValid,
+      setIsFetchingRunning, setFetchingProgress,
+      impactMethodId, toasting, processApiResponseBound,
+      getData, setAllCostDrivers, setIsCostDriversLoaded);
+};
 
   const {
     isOpen: isAlertBoxVisible,
@@ -204,7 +120,7 @@ const LcaIntegration = ({ getData, toasting }) => {
                 <option value={impactMethodId}>EF 3.0 weighted and normalized</option>
               </Select>
               <Button
-                onClick={handleButtonClick}
+                onClick={handleButtonClickBound}
                 disabled={isFetchingRunning}
                 colorScheme='white'
                 variant='outline'
