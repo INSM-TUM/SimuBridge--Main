@@ -118,7 +118,7 @@ const Activity = ({ getData, currentElement }) => {
               <Input name="cost" type="input" value={activityConfiguration.cost} onChange={(event) => setCost(event.target.value)} bg="white" /> {/* TODO: Potentially also display the current money unit for the scenario */}
             </FormControl>
           </AccordionPanel>
-          {/*  <AccordionPanel pb={4}>
+          {  <AccordionPanel pb={4}>
                 {
                   activityConfiguration.costDrivers.map((abstractCostDriver, index) => {
                     return <FormControl>
@@ -142,7 +142,7 @@ const Activity = ({ getData, currentElement }) => {
                 <ButtonGroup size='md' isAttached variant="outline" >
                   <IconButton icon={<AddIcon />} disabled={activityConfiguration.costDrivers.filter(abstractCostDriver => !abstractCostDriver).length} onClick={() => addAbstractCostDriver()} />
                 </ButtonGroup>
-              </AccordionPanel> */}
+              </AccordionPanel> }
         </AccordionItem>
 
         <AccordionItem>

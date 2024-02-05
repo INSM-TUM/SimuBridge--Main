@@ -15,6 +15,8 @@ import {
   UnorderedList, ListItem
 } from '@chakra-ui/react';
 
+import * as o from "olca-ipc";
+
 import { ExternalLinkIcon } from '@chakra-ui/icons';
 import "./styles.css"
 
@@ -26,8 +28,9 @@ const LcaIntegration = ({ getData, toasting }) => {
   const [apiUrl, setApiUrl] = useState(defaultApiUrl);
   const [isApiUrlValid, setIsApiUrlValid] = useState(true);
   const [isFetchingRunning, setIsFetchingRunning] = useState(false);
+  const [fetchingProgress, setFetchingProgress] = useState(-1);
   const [isScenarioModelLoaded, setIsScenarioModelLoaded] = useState(true);
-  const impactMethodId = 'b4571628-4b7b-3e4f-81b1-9a8cca6cb3f8';
+  const impactMethodId = 'b4571628-4b7b-3e4f-81b1-9a8cca6cb3f8';//'b4571628-4b7b-3e4f-81b1-9a8cca6cb3f8';
   const [allCostDrivers, setAllCostDrivers] = useState([]);
   const [isCostDriversLoaded, setIsCostDriversLoaded] = useState(false);
 
@@ -59,22 +62,15 @@ const LcaIntegration = ({ getData, toasting }) => {
     setIsApiUrlValid(true);
   };
 
-  const processApiResponse = async (response) => {
-    var data = response.result;
+  const processApiResponse = async (data) => {;
     console.log('Cost drivers from API:', data);
     var abstractCostDriversMap = new Map();
 
     data.forEach(el => {
-      let unitConfig = SimulationModelModdle.getInstance().create("simulationmodel:TargetUnit", {
-        id: el.targetUnit['@id'],
-        name: el.targetUnit.name,
-      });
-
       let concreteCostDriverConfig = SimulationModelModdle.getInstance().create("simulationmodel:ConcreteCostDriver", {
-        id: el['@id'],
+        id: el.id,
         name: el.name,
         cost: el.targetAmount,
-        unit: unitConfig
       });
 
       if (!abstractCostDriversMap.has(el.category)) {
@@ -111,37 +107,21 @@ const LcaIntegration = ({ getData, toasting }) => {
 
     setIsFetchingRunning(true);
 
-    let resp = await fetch(apiUrl, {
-      method: "POST",
-      timeout: 10000,
-      body: JSON.stringify({
-        jsonrpc: "2.0",
-        id: 1,
-        method: "data/get/all",
-        params: {
-          "@type": "ProductSystem"
-        }
-      })
-    })
-      .then((response) => {
-        setIsFetchingRunning(false);
-        if (!response.ok) {
+    try {
+      const client = new o.IpcClient.on(apiUrl);
+      const systems = await client.getDescriptors(o.RefType.ProductSystem);
+      console.log('Systems:', systems);
 
-          throw new Error(`HTTP error! Status: ${response.status}`);
-        }
-        return response.json();
-      })
-      .then(async (data) => {
-        console.log('API Response:', data);
-        toasting("success", "Success", "Cost drivers fetched successfully");
-        await processApiResponse(data);
-      })
-      .catch((error) => {
-        setIsFetchingRunning(false);
-        toasting("error", "Error", "Please check if the OpenLCA IPC server is running and the URL is correct");
+      toasting("success", "Success", "Cost drivers fetched successfully");
+      await processApiResponse(systems);
 
-        console.error('API Error:', error);
-      });
+      setIsFetchingRunning(false);
+    }
+    catch (error) {
+      setIsFetchingRunning(false);
+      toasting("error", "Error", "Please check if the OpenLCA IPC server is running and the URL is correct");
+      console.error('API Error:', error);
+    }
   };
 
   const {
@@ -188,6 +168,9 @@ const LcaIntegration = ({ getData, toasting }) => {
                   </Button>
                 </InputRightElement>
               </InputGroup>
+              <Select isDisabled value={impactMethodId} ml={2}>
+                <option value={impactMethodId}>EF 3.0 weighted and normalized</option>
+              </Select>
               <Button
                 onClick={handleButtonClick}
                 disabled={isFetchingRunning}
@@ -202,7 +185,11 @@ const LcaIntegration = ({ getData, toasting }) => {
                 Fetch
               </Button>
             </Flex>
-            {isFetchingRunning && <Progress mt={2} colorScheme='green' size='xs' isIndeterminate />}
+            {isFetchingRunning &&
+              <Progress mt={2} colorScheme='green' size='xs'
+                {...(fetchingProgress >= 0 ? { value: fetchingProgress } : { isIndeterminate: true })}
+              />
+            }
           </CardBody>
         </Card>
 
@@ -238,7 +225,7 @@ const LcaIntegration = ({ getData, toasting }) => {
                       <UnorderedList>
                         {costDriver.concreteCostDrivers.map((concreteCostDriver, index) => (
                           <ListItem key={index}>
-                            {concreteCostDriver.name}: {concreteCostDriver.cost} {concreteCostDriver.unit.name}
+                            {concreteCostDriver.name}: {concreteCostDriver.cost}
                           </ListItem>
                         ))}
                       </UnorderedList>
