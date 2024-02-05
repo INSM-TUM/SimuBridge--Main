@@ -134,7 +134,7 @@ const handleButtonClickBound = async () => {
               </Button>
             </Flex>
             {isFetchingRunning &&
-              <Progress mt={2} colorScheme='green' size='xs'
+              <Progress mt={2} colorScheme='green' size='md' hasStripe
                 {...(fetchingProgress >= 0 ? { value: fetchingProgress } : { isIndeterminate: true })}
               />
             }

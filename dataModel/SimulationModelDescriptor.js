@@ -135,13 +135,12 @@ export const SimulationModelDescriptor = {
                 { "name": "id", "type": "String"},
                 { "name": "name", "type": "String"},
                 { "name": "frequency", "type": "String"},
-                { "name": "mappings", "type": "DriverTaskMapping", isMany : true }
+                { "name": "mappings", "type": "DriversMapping", isMany : true }
             ]
         },
         {
-            "name" : "DriverTaskMapping",
+            "name" : "DriversMapping",
             "properties": [
-                { "name": "task", "type": "String"},
                 { "name": "abstractDriver", "type": "String"},
                 { "name": "concreteDriver", "type": "String"},
             ]
