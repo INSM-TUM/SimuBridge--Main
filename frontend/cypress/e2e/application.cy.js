@@ -123,7 +123,7 @@ describe('Inside a project', () => {
             clickButton('Scenario Overview').shouldLeadTo('/scenario');
             clickButton('Resource Parameters').shouldLeadTo('/resource');
             clickButton('Model-based Parameters').shouldLeadTo('/modelbased');
-            clickButton('LCA Configuration').shouldLeadTo('/lcaconfiguration');
+            clickButton('LCA Configuration').shouldLeadTo('/lcavariants');
             clickButton('Run Simulation').shouldLeadTo('/simulation');
             clickButton('Run Process Miner').shouldLeadTo('/processminer');
             clickButton('OpenLCA Integration').shouldLeadTo('/lcaIntegration');

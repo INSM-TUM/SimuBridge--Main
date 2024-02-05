@@ -211,7 +211,7 @@ const Activity = ({ getData, currentElement }) => {
               as="a"
               size="sm"
               variant="link"
-              href="/lcaconfiguration"
+              href="/lcavariants"
               rightIcon={<SettingsIcon />}
               colorScheme="teal"
             >

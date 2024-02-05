@@ -13,7 +13,7 @@ import { saveCostVariant, deleteVariant } from './LcaDataManager'; // Adjust the
 
 import SimulationModelModdle, { assign, limitToDataScheme } from "simulation-bridge-datamodel/DataModel";
 
-function LcaConfiguration({ getData, toasting }) {
+function LcaVariantsConfiguration({ getData, toasting }) {
   const [variants, setVariants] = useState([]);
   const [currentVariant, setCurrentVariant] = useState({ name: '', mappings: [], frequency: 15 });
   const [allCostDrivers, setAllCostDrivers] = useState([]);
@@ -157,4 +157,4 @@ function LcaConfiguration({ getData, toasting }) {
   );
 }
 
-export default LcaConfiguration;
+export default LcaVariantsConfiguration;

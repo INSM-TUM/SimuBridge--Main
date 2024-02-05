@@ -39,7 +39,7 @@ import { downloadData } from '../../util/Storage';
       { name: 'Scenario Overview', icon: FiSettings, path: '/scenario', event: () =>  setCurrent("Scenario Parameters") },
       { name: 'Resource Parameters', icon: FiUser, path: '/resource', event: () =>  setCurrent("Resource Parameters")},
       { name: 'Model-based Parameters', icon: FiStar, path: '/modelbased', event: () =>  setCurrent("Modelbased Parameters") },
-      { name: 'LCA Configuration', icon: FiFeather, path: '/lcaconfiguration', event: () =>  setCurrent("LCA Configuration") },
+      { name: 'LCA Variants', icon: FiFeather, path: '/lcavariants', event: () =>  setCurrent("LCA Configuration") },
     ]
 
     

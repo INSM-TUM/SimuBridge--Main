@@ -23,7 +23,7 @@ import SimulationModelModdle from 'simulation-bridge-datamodel/DataModel';
 import ModelBasedOverview from './components/TablesOverviewComparison/ModelBasedOverview';
 import { ModelData, ScenarioData } from './util/DataHandles';
 import LcaIntegration from './components/LcaParameters/LcaIntegration';
-import LcaConfiguration from './components/LcaParameters/LcaConfiguration';
+import LcaVariantsConfiguration from './components/LcaParameters/LcaVariantsConfiguration';
 
 const errorsToWarn = [
   "Warning:",
@@ -314,7 +314,7 @@ useEffect(() => {
               {/* <Route path="/modelbased/tableview" element={atLeastOneModel && <ModelBasedOverview currentModel={getData().getCurrentModel()}   />} /> */}
               <Route path="/modelbased/tableview" element={atLeastOneModel && <ModelbasedParametersTable getData={getData} current={current} setCurrent={setCurrent} setObject={setObject}   />} />
               
-              <Route path="/lcaconfiguration" element={<LcaConfiguration path="/lcaconfiguration" {...{projectName, getData, toasting }} />} />
+              <Route path="/lcavariants" element={<LcaVariantsConfiguration path="/lcavariants" {...{projectName, getData, toasting }} />} />
 
               <Route path="/simulation" element={<SimulationPage path="/simulation"  {...{projectName, getData, toasting }} />} />
               <Route path="/processminer" element={<ProcessMinerPage path="/processminer" {...{projectName, getData, toasting }} />} />
