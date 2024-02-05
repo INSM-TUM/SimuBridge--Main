@@ -29,7 +29,8 @@ const Activity = ({ getData, currentElement }) => {
     }
   }, []);
 
-  const variants = getData().getCurrentScenario().resourceParameters.environmentMappingConfig.variants;
+  const variants = getData().getCurrentScenario().resourceParameters.environmentMappingConfig?.variants ?? [];
+
   const nodeId = currentElement.id;
   const nodeMappings = variants.flatMap(variant => variant.mappings)
     .filter(mapping => mapping.task === nodeId);
