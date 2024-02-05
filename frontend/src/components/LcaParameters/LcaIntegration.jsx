@@ -30,7 +30,7 @@ const LcaIntegration = ({ getData, toasting }) => {
   const [isFetchingRunning, setIsFetchingRunning] = useState(false);
   const [fetchingProgress, setFetchingProgress] = useState(-1);
   const [isScenarioModelLoaded, setIsScenarioModelLoaded] = useState(true);
-  const impactMethodId = 'b4571628-4b7b-3e4f-81b1-9a8cca6cb3f8';//'b4571628-4b7b-3e4f-81b1-9a8cca6cb3f8';
+  const impactMethodId = 'b4571628-4b7b-3e4f-81b1-9a8cca6cb3f8';
   const [allCostDrivers, setAllCostDrivers] = useState([]);
   const [isCostDriversLoaded, setIsCostDriversLoaded] = useState(false);
 
@@ -62,15 +62,45 @@ const LcaIntegration = ({ getData, toasting }) => {
     setIsApiUrlValid(true);
   };
 
-  const processApiResponse = async (data) => {;
-    console.log('Cost drivers from API:', data);
-    var abstractCostDriversMap = new Map();
+  const processApiResponse = async (client, data) => {
+    const impactMethod = await client.get(
+      o.RefType.ImpactMethod,
+      { id: impactMethodId, refType: o.RefType.ImpactMethod })
+    let e = impactMethod.nwSets
 
-    data.forEach(el => {
+    var abstractCostDriversMap = new Map();
+    for(const el of data)
+    {
+      console.log('Element:', el);
+      let calcSetup = await o.CalculationSetup.of({
+        target: el,
+        impactMethod: impactMethod,
+        nwSet: e[0],
+        allocation: o.AllocationType.USE_DEFAULT_ALLOCATION,
+        withCosts: false,
+        withRegionalization: false
+      });
+      console.log('Calculation Setup:', calcSetup);
+
+      const result = await client?.calculate(calcSetup);
+      if (!result) {
+        console.log("calculation failed: no result retrieved");
+      }
+      const s = await result.untilReady();
+      if (s.error) {
+        console.log(s.error);
+      } 
+      
+      console.log('Result:', result);
+      const weight = await result.getWeightedImpacts();
+      console.log('Weight:', weight);
+      const impactSum = weight.map(i => i.amount || 0).reduce((sum, current) => sum + current, 0);
+      console.log('Impact Sum:', impactSum);
+
       let concreteCostDriverConfig = SimulationModelModdle.getInstance().create("simulationmodel:ConcreteCostDriver", {
         id: el.id,
         name: el.name,
-        cost: el.targetAmount,
+        cost: impactSum,
       });
 
       if (!abstractCostDriversMap.has(el.category)) {
@@ -84,7 +114,9 @@ const LcaIntegration = ({ getData, toasting }) => {
         let abstractDriver = abstractCostDriversMap.get(el.category);
         abstractDriver.concreteCostDrivers.push(concreteCostDriverConfig);
       }
-    });
+
+      setFetchingProgress((data.indexOf(el) + 1) / data.length * 100);
+    }
 
     const abstractCostDrivers = Array.from(abstractCostDriversMap.values());
 
@@ -113,7 +145,7 @@ const LcaIntegration = ({ getData, toasting }) => {
       console.log('Systems:', systems);
 
       toasting("success", "Success", "Cost drivers fetched successfully");
-      await processApiResponse(systems);
+      await processApiResponse(client, systems);
 
       setIsFetchingRunning(false);
     }
