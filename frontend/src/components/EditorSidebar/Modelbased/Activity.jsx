@@ -24,8 +24,11 @@ const Activity = ({ getData, currentElement }) => {
 
     if (scenario) {
       const costDrivers = scenario.resourceParameters.environmentalCostDrivers;
-      const uniqueCostDrivers = Array.from(new Map(costDrivers.map(item => [item.id, item])).values());
-      setAllCostDrivers(uniqueCostDrivers);
+      if(costDrivers)
+      {
+        const uniqueCostDrivers = Array.from(new Map(costDrivers.map(item => [item.id, item])).values());
+        setAllCostDrivers(uniqueCostDrivers);
+      }
     }
   }, []);
 
