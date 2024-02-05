@@ -2,12 +2,13 @@ import React, { useState, useEffect } from 'react';
 import {
   Card, CardHeader, CardBody, Heading, Stack, Flex, Text,
   Input, NumberInput, NumberInputField, NumberInputStepper, NumberIncrementStepper, NumberDecrementStepper,
-  Select, Button, IconButton
+  Select, Button, IconButton, VStack
 } from '@chakra-ui/react';
-import { FiSave } from 'react-icons/fi';
+import { FiSave, FiSlash } from 'react-icons/fi';
 import { AiOutlineMinusCircle } from 'react-icons/ai';
 
-export default function VariantEditor({ costVariant, allCostDrivers, saveCostVariant, toasting }) {
+export default function VariantEditor({ costVariant, allCostDrivers, saveCostVariant, setCurrentVariant,
+  toasting }) {
   const defaultFrequency = 15;
   const minFrequency = 0;
   const maxFrequency = 100;
@@ -23,6 +24,7 @@ export default function VariantEditor({ costVariant, allCostDrivers, saveCostVar
     setDriverMapping(costVariant.mappings || []);
     setVariantName(costVariant.name || '');
     setFrequency(costVariant.frequency || defaultFrequency);
+    setIsNewVariant(!costVariant.id);
   }, [costVariant]);
 
   useEffect(() => {
@@ -83,10 +85,33 @@ export default function VariantEditor({ costVariant, allCostDrivers, saveCostVar
   return (
     <Card my={2}>
       <CardHeader>
-        <Heading size='md'>{isNewVariant ? 'Add' : 'Edit'} Variant</Heading>
-        <Text fontSize='sm' color='gray.500' mt={1}>
-          {costVariant.id && `ID: ${costVariant.id}`}
-        </Text>
+        <Flex justifyContent="space-between" alignItems="center">
+          <VStack align="start">
+            <Heading size='md'>{isNewVariant ? 'Add' : 'Edit'} Variant</Heading>
+            {costVariant.id &&
+              <Text fontSize='sm' color='gray.500'>
+                ID: {costVariant.id}
+              </Text>
+            }
+          </VStack>
+          {
+            !isNewVariant &&
+            <Button
+              onClick={() => {
+                setCurrentVariant({ name: '', mappings: [], frequency: 15 });
+              }}
+              colorScheme='white'
+              variant='outline'
+              border='1px'
+              borderColor='#B4C7C9'
+              color='#6E6E6F'
+              _hover={{ bg: '#B4C7C9' }}
+              leftIcon={<FiSlash />}
+            >
+              Cancel
+            </Button>
+          }
+        </Flex>
       </CardHeader>
       <CardBody>
         <Stack>
@@ -157,6 +182,7 @@ export default function VariantEditor({ costVariant, allCostDrivers, saveCostVar
                 colorScheme="teal"
                 variant="outline"
                 onClick={() => removeDriverMapping(index)}
+
               />
             </Flex>
           ))}

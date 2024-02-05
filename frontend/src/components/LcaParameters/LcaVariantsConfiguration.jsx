@@ -34,16 +34,6 @@ function LcaVariantsConfiguration({ getData, toasting }) {
         setVariants(environmentMappingConfig.variants);
       }
     }
-
-    /*const modelData = getData().getCurrentModel();
-    if (modelData && modelData.elementsById) {
-      const extractedTasks = Object.entries(modelData.elementsById)
-        .filter(([_, value]) => value.$type === 'bpmn:Task')
-        .map(([id, value]) => ({ id, name: value.name }));
-      const uniqueBpmnActivities = Array.from(new Map(extractedTasks.map(item => [item.id, item])).values());
-      setBpmnActivities(uniqueBpmnActivities);
-    }*/
-    //exracting tasks from the model is not needed
   }, []);
 
   const handleSaveCostVariant = async (variant) => {
@@ -77,7 +67,7 @@ function LcaVariantsConfiguration({ getData, toasting }) {
 
   return (
     <Box>
-      <Heading size='lg'>Environmental Configuration for {getData().getCurrentScenario().scenarioName}</Heading>
+      <Heading size='lg'>OpenLCA Variants for {getData().getCurrentScenario().scenarioName}</Heading>
       {!isCostDriversLoaded ?
         <Alert status='warning' mt={2} display='flex' alignItems='center' justifyContent='space-between'>
           <Flex alignItems='center'>
@@ -148,6 +138,7 @@ function LcaVariantsConfiguration({ getData, toasting }) {
             costVariant={currentVariant}
             allCostDrivers={allCostDrivers}
             saveCostVariant={handleSaveCostVariant}
+            setCurrentVariant={setCurrentVariant}
             toasting={toasting}
           />
         </Box>}
