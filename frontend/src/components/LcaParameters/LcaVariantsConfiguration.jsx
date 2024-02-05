@@ -17,7 +17,6 @@ function LcaVariantsConfiguration({ getData, toasting }) {
   const [variants, setVariants] = useState([]);
   const [currentVariant, setCurrentVariant] = useState({ name: '', mappings: [], frequency: 15 });
   const [allCostDrivers, setAllCostDrivers] = useState([]);
-  const [bpmnActivities, setBpmnActivities] = useState([]);
   const [isCostDriversLoaded, setIsCostDriversLoaded] = useState(false);
 
   useEffect(() => {
@@ -36,14 +35,15 @@ function LcaVariantsConfiguration({ getData, toasting }) {
       }
     }
 
-    const modelData = getData().getCurrentModel();
+    /*const modelData = getData().getCurrentModel();
     if (modelData && modelData.elementsById) {
       const extractedTasks = Object.entries(modelData.elementsById)
         .filter(([_, value]) => value.$type === 'bpmn:Task')
         .map(([id, value]) => ({ id, name: value.name }));
       const uniqueBpmnActivities = Array.from(new Map(extractedTasks.map(item => [item.id, item])).values());
       setBpmnActivities(uniqueBpmnActivities);
-    }
+    }*/
+    //exracting tasks from the model is not needed
   }, []);
 
   const handleSaveCostVariant = async (variant) => {
@@ -131,7 +131,6 @@ function LcaVariantsConfiguration({ getData, toasting }) {
                       <UnorderedList>
                         {variant.mappings.map((mapping, mappingIndex) => (
                           <ListItem key={mappingIndex}>
-                            {bpmnActivities.find(activity => activity.id === mapping.task)?.name}{" - "}
                             {mapping.abstractDriver}{" - "}
                             {allCostDrivers.find(driver => driver.name === mapping.abstractDriver)
                               ?.concreteCostDrivers.find(concreteDriver => concreteDriver.id === mapping.concreteDriver)
@@ -147,7 +146,6 @@ function LcaVariantsConfiguration({ getData, toasting }) {
           </Card>
           <VariantEditor
             costVariant={currentVariant}
-            bpmnActivities={bpmnActivities}
             allCostDrivers={allCostDrivers}
             saveCostVariant={handleSaveCostVariant}
             toasting={toasting}

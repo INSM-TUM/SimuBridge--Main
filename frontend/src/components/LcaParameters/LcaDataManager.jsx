@@ -1,11 +1,10 @@
 import SimulationModelModdle from "simulation-bridge-datamodel/DataModel";
 import { v4 as uuidv4 } from 'uuid';
 
-export const saveCostVariant = async (allCostDrivers, variant, variants, updatedVariants, getData, toasting) => {
+export const saveCostVariant = async (allCostDrivers, variant, variants, updatedVariants, getData) => {
     //save variants and its mappings
-    let driverTaskMappings = variant.mappings.map(mapping => {
-        return SimulationModelModdle.getInstance().create("simulationmodel:DriverTaskMapping", {
-            task: mapping.task,
+    let driversMappings = variant.mappings.map(mapping => {
+        return SimulationModelModdle.getInstance().create("simulationmodel:DriversMapping", {
             abstractDriver: mapping.abstractDriver,
             concreteDriver: mapping.concreteDriver,
         });
@@ -15,7 +14,7 @@ export const saveCostVariant = async (allCostDrivers, variant, variants, updated
         id: variant.id,
         name: variant.name,
         frequency: variant.frequency,
-        mappings: driverTaskMappings,
+        mappings: driversMappings,
     });
     let updatedVariantsObject = [...variants.filter(v => v.id !== variant.id), variantExtended];
     const environmentMappingConfig =
