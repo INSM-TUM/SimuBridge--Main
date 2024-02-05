@@ -95,23 +95,35 @@ export default function VariantEditor({ costVariant, allCostDrivers, saveCostVar
               </Text>
             }
           </VStack>
-          {
-            !isNewVariant &&
+          <Stack direction="row" spacing={2}>
+            {
+              !isNewVariant &&
+              <Button
+                onClick={() => {
+                  setCurrentVariant({ name: '', mappings: [], frequency: 15 });
+                }}
+                colorScheme='white'
+                variant='outline'
+                border='1px'
+                borderColor='#B4C7C9'
+                color='#6E6E6F'
+                _hover={{ bg: '#B4C7C9' }}
+                leftIcon={<FiSlash />}
+              >
+                Cancel
+              </Button>
+            }
             <Button
-              onClick={() => {
-                setCurrentVariant({ name: '', mappings: [], frequency: 15 });
-              }}
+              onClick={saveVariantClicked}
               colorScheme='white'
               variant='outline'
               border='1px'
               borderColor='#B4C7C9'
               color='#6E6E6F'
               _hover={{ bg: '#B4C7C9' }}
-              leftIcon={<FiSlash />}
-            >
-              Cancel
-            </Button>
-          }
+              leftIcon={<FiSave />}
+            >{isNewVariant ? 'Add' : 'Save'}</Button>
+          </Stack>
         </Flex>
       </CardHeader>
       <CardBody>
@@ -138,17 +150,6 @@ export default function VariantEditor({ costVariant, allCostDrivers, saveCostVar
                 <NumberDecrementStepper />
               </NumberInputStepper>
             </NumberInput>
-            <Button
-              onClick={saveVariantClicked}
-              colorScheme='white'
-              variant='outline'
-              border='1px'
-              borderColor='#B4C7C9'
-              color='#6E6E6F'
-              ml={3}
-              _hover={{ bg: '#B4C7C9' }}
-              leftIcon={<FiSave />}
-            >{isNewVariant ? 'Add' : 'Edit'}</Button>
           </Flex>
           {driverMapping.map((mapping, index) => (
             <Flex key={index} mt={3} alignItems="center">
