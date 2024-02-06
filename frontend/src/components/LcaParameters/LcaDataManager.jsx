@@ -1,5 +1,4 @@
 import SimulationModelModdle from "simulation-bridge-datamodel/DataModel";
-import { v4 as uuidv4 } from 'uuid';
 
 export const saveCostVariant = async (allCostDrivers, variant, variants, updatedVariants, getData) => {
     //save variants and its mappings

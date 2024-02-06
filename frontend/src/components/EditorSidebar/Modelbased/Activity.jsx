@@ -1,6 +1,7 @@
 import {
   Input, FormControl, FormLabel, Select, Box, ButtonGroup, IconButton, Text, Flex, Accordion,
   UnorderedList, ListItem,
+  Link as ChakraLink, LinkProps,
   Button,
   AccordionItem,
   AccordionButton,
@@ -8,12 +9,12 @@ import {
   AccordionIcon
 } from '@chakra-ui/react';
 import React, { useState, useEffect } from 'react'
+import { Link as ReactRouterLink } from "react-router-dom";
 import { AddIcon, SettingsIcon } from '@chakra-ui/icons'
 import { CloseIcon } from '@chakra-ui/icons';
 import DistributionEditor from '../../DistributionEditor';
 import { distributionToState, stateToDistribution } from '../../../util/Distributions';
 import AbstractModelElementEditor from './AbstractModelElementEditor';
-import SimulationModelModdle from 'simulation-bridge-datamodel/DataModel';
 
 const Activity = ({ getData, currentElement }) => {
   const [allCostDrivers, setAllCostDrivers] = useState([]);

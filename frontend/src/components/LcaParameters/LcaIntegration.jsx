@@ -1,23 +1,18 @@
 import React, { useState, useEffect } from "react";
-import { processApiResponse, handleButtonClick } from './LcaIntegrationUtils';
 
 import {
   Alert, AlertIcon, AlertDescription, CloseButton, useDisclosure,
   Accordion, AccordionItem, AccordionButton, AccordionPanel, AccordionIcon,
-  Flex,
-  Heading,
-  Card, CardHeader, CardBody,
-  Text,
-  Input, InputGroup, InputRightElement, InputLeftElement,
-  Select, Button,
-  Progress,
-  Box,
-  Spinner,
-  UnorderedList, ListItem
+  Flex, Heading, Card, CardHeader, CardBody,
+  Text, Input, InputGroup, InputRightElement, InputLeftElement,
+  Select, Button, Progress, Box, Spinner, UnorderedList, ListItem
 } from '@chakra-ui/react';
-
 import { ExternalLinkIcon } from '@chakra-ui/icons';
-import "./styles.css"
+
+import { processApiResponse, handleButtonClick } from './LcaIntegrationUtils';
+
+import "./styles.css";
+
 
 const LcaIntegration = ({ getData, toasting }) => {
   //vars

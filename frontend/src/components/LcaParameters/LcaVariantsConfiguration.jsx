@@ -1,19 +1,19 @@
 import React, { useState, useEffect } from 'react';
-import {
-  Box, Heading, Card, CardHeader, CardBody, Button, Flex, Text,
-  Alert, AlertIcon, AlertDescription,
-  UnorderedList, ListItem,
-  Link as ChakraLink, LinkProps,
-  Accordion, AccordionItem, AccordionPanel, AccordionButton
-} from '@chakra-ui/react';
-import { FiEdit, FiTrash2 } from 'react-icons/fi';
 import { v4 as uuidv4 } from 'uuid';
 import { Link as ReactRouterLink } from "react-router-dom";
+
+import {
+  Box, Heading, Card, CardHeader, CardBody,
+  Button, Flex, Text, Alert, AlertIcon, AlertDescription,
+  UnorderedList, ListItem, Link as ChakraLink, LinkProps,
+  Accordion, AccordionItem, AccordionPanel, AccordionButton
+} from '@chakra-ui/react';
+
+import { FiEdit, FiTrash2 } from 'react-icons/fi';
+
 import VariantEditor from './VariantEditor';
-import { saveCostVariant, deleteVariant } from './LcaDataManager'; // Adjust the path as needed
+import { saveCostVariant, deleteVariant } from './LcaDataManager';
 
-
-import SimulationModelModdle, { assign, limitToDataScheme } from "simulation-bridge-datamodel/DataModel";
 
 function LcaVariantsConfiguration({ getData, toasting }) {
   const [variants, setVariants] = useState([]);

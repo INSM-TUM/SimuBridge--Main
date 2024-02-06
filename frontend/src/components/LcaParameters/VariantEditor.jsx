@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from 'react';
+
 import {
   Card, CardHeader, CardBody, Heading, Stack, Flex, Text,
-  FormControl, FormLabel,
   Input, NumberInput, NumberInputField, NumberInputStepper, NumberIncrementStepper, NumberDecrementStepper,
   Select, Button, IconButton, VStack
 } from '@chakra-ui/react';
+
 import { FiSave, FiSlash } from 'react-icons/fi';
 import { AiOutlineMinusCircle } from 'react-icons/ai';
+
 
 export default function VariantEditor({ costVariant, allCostDrivers, saveCostVariant, setCurrentVariant,
   toasting }) {
