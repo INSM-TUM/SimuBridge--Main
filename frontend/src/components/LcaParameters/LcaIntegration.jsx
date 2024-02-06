@@ -93,7 +93,7 @@ const handleButtonClickBound = async () => {
           <CardBody>
             OpenLCA IPC server host and port:
             <Flex mt={2}>
-              <InputGroup size='md' flex='3'>
+              <InputGroup size='md' flex='2'>
                 <InputLeftElement pointerEvents='none'>
                   <ExternalLinkIcon color='gray.300' />
                 </InputLeftElement>
@@ -113,7 +113,7 @@ const handleButtonClickBound = async () => {
                   </Button>
                 </InputRightElement>
               </InputGroup>
-              <Select isDisabled value={impactMethodId} ml={2} flex='3'>
+              <Select isDisabled value={impactMethodId} ml={2} flex='2'>
                 <option value={impactMethodId}>EF 3.0 weighted and normalized</option>
               </Select>
               <Button
@@ -122,7 +122,7 @@ const handleButtonClickBound = async () => {
                 isLoading={isFetchingRunning}
                 loadingText='Fetching...'
                 colorScheme='white'
-                flex='2'
+                flex='1'
                 variant='outline'
                 border='1px'
                 borderColor='#B4C7C9'

@@ -118,8 +118,7 @@ export const SimulationModelDescriptor = {
             "properties": [
                 { "name": "id", "type": "String"},
                 { "name": "name", "type": "String"},
-                { "name": "cost", "type": "Integer"},
-                { "name": "normalizedCost", "type": "Real"},
+                { "name": "cost", "type": "Real"},
             ]
         },
 

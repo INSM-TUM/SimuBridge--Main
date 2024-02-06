@@ -23,13 +23,25 @@ export const saveCostVariant = async (allCostDrivers, variant, variants, updated
     getData().getCurrentScenario().resourceParameters.environmentMappingConfig = environmentMappingConfig;
     await getData().saveCurrentScenario();
 
-    //save CostVariantConfig for Team B
+    saveCostVariantConfig(getData, allCostDrivers);
+    await getData().saveCurrentScenario();
+};
+
+export const saveCostVariantConfig = async (getData, allCostDrivers) => {
+    const scenario = getData().getCurrentScenario();
+
+    if (!scenario) {
+        return;
+    }
+
+    const variants = scenario.resourceParameters.environmentMappingConfig.variants;
+
     let costVariantConfig = SimulationModelModdle.getInstance().create("simulationmodel:CostVariantConfig", {
-        count: updatedVariants.length,
+        count: variants.length,
         variants: [],
     });
 
-    updatedVariants.forEach(v => {
+    variants.forEach(v => {
         let drivers = [];
         v.mappings.forEach(m => {
             const concreteDriver = allCostDrivers
@@ -52,10 +64,10 @@ export const saveCostVariant = async (allCostDrivers, variant, variants, updated
         costVariantConfig.variants.push(costVariant);
     });
 
-    console.log('CostVariantConfig:', costVariantConfig);
+    console.log('COST VARIANT CONFIG:', costVariantConfig);
     getData().getCurrentScenario().resourceParameters.CostVariantConfig = costVariantConfig;
     await getData().saveCurrentScenario();
-};
+}
 
 export const deleteVariant = async (variantId, variants, getData, toasting) => {
     //delete from configuration

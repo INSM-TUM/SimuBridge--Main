@@ -3,8 +3,8 @@ import { useNavigate } from 'react-router-dom';
 
 import {
   Input, FormControl, FormLabel, Select, Box, ButtonGroup, IconButton, Text,
-  Flex, Stack,
-  UnorderedList, ListItem, Link as ChakraLink, Icon,
+  Flex,
+  Link as ChakraLink, Icon,
   Accordion, AccordionItem, AccordionButton, AccordionPanel, AccordionIcon
 } from '@chakra-ui/react';
 import { AddIcon, SettingsIcon, CloseIcon } from '@chakra-ui/icons';
@@ -13,10 +13,11 @@ import DistributionEditor from '../../DistributionEditor';
 import AbstractModelElementEditor from './AbstractModelElementEditor';
 
 import { distributionToState, stateToDistribution } from '../../../util/Distributions';
+import { saveCostVariantConfig } from '../../LcaParameters/LcaDataManager';
 
 
 const Activity = ({ getData, currentElement, setCurrentRightSideBar }) => {
-  const [allCostDrivers, setAllCostDrivers] = useState([]);
+  const [allAbstractCostDrivers, setAllAbstractCostDrivers] = useState([]);
   const reactDomNavigator = useNavigate();
 
   //init
@@ -26,18 +27,12 @@ const Activity = ({ getData, currentElement, setCurrentRightSideBar }) => {
     if (scenario) {
       const costDrivers = scenario.resourceParameters.environmentalCostDrivers;
       if (costDrivers) {
-        const uniqueCostDrivers = Array.from(new Map(costDrivers.map(item => [item.id, item])).values());
-        setAllCostDrivers(uniqueCostDrivers);
+        setAllAbstractCostDrivers(costDrivers);
       }
     }
   }, []);
 
-  const variants = getData().getCurrentScenario().resourceParameters.environmentMappingConfig?.variants ?? [];
-
   const nodeId = currentElement.id;
-  const nodeMappings = variants.flatMap(variant => variant.mappings)
-    .filter(mapping => mapping.task === nodeId);
-
 
   function getExistingActivityConfiguration() {
     return getData().getCurrentModel().modelParameter.activities.find(value => value.id === currentElement.id)
@@ -87,13 +82,16 @@ const Activity = ({ getData, currentElement, setCurrentRightSideBar }) => {
   }
 
   const removeAbstractCostDriver = (index) => {
-    setAbstractCostDrivers(activityConfiguration.costDrivers.filter((value, localIndex) => localIndex !== index))
+    setAbstractCostDrivers(activityConfiguration.costDrivers.filter((value, localIndex) => localIndex !== index));
+    saveCostVariantConfig(getData, allAbstractCostDrivers);
   }
 
   const handleAbstractCostDrivers = (index, value) => {
     activityConfiguration.costDrivers[index] = value;
     setAbstractCostDrivers(activityConfiguration.costDrivers.filter(abstractCostDriver => abstractCostDriver));
+    saveCostVariantConfig(getData, allAbstractCostDrivers);
   }
+
   return <AbstractModelElementEditor  {...{
     type: 'activities',
     typeName: 'Activity',
@@ -122,31 +120,6 @@ const Activity = ({ getData, currentElement, setCurrentRightSideBar }) => {
               <Input name="cost" type="input" value={activityConfiguration.cost} onChange={(event) => setCost(event.target.value)} bg="white" /> {/* TODO: Potentially also display the current money unit for the scenario */}
             </FormControl>
           </AccordionPanel>
-          {<AccordionPanel pb={4}>
-            {
-              activityConfiguration.costDrivers.map((abstractCostDriver, index) => {
-                return <FormControl>
-                  <FormLabel>Abstract Cost Driver {(index + 1)}:</FormLabel>
-                  <Flex gap='0' flexDirection='row'>
-                    <Select key={index} name="abstractCostDriver" value={abstractCostDriver} {...(!abstractCostDriver && { placeholder: 'Select abstract cost driver', color: 'red' })} onChange={(event) => handleAbstractCostDrivers(index, event.target.value)} bg="white">
-                      {getData().getCurrentScenario().resourceParameters.costDrivers
-                        .filter(alternativeAbstractCostDriver => !activityConfiguration.costDrivers.includes(alternativeAbstractCostDriver.id) || alternativeAbstractCostDriver.id === abstractCostDriver)
-                        .map(x => {
-                          return <option style={{ color: 'black' }} value={x.id} key={x.id}>{x.id}</option>
-                        })}
-
-                    </Select>
-                    <IconButton icon={<CloseIcon />} onClick={() => removeAbstractCostDriver(index)} />
-                  </Flex>
-                </FormControl>
-              })
-
-            }
-
-            <ButtonGroup size='md' isAttached variant="outline" >
-              <IconButton icon={<AddIcon />} disabled={activityConfiguration.costDrivers.filter(abstractCostDriver => !abstractCostDriver).length} onClick={() => addAbstractCostDriver()} />
-            </ButtonGroup>
-          </AccordionPanel>}
         </AccordionItem>
 
         <AccordionItem>
@@ -211,55 +184,54 @@ const Activity = ({ getData, currentElement, setCurrentRightSideBar }) => {
             </AccordionButton>
           </h2>
           <AccordionPanel pb={4}>
-            Cost Drivers not found
-            <ChakraLink
-              //as={ReactRouterLink}
-              onClick={() => {
-                setCurrentRightSideBar(undefined);
-                reactDomNavigator('/lcavariants');
-              }}
-              //to='/lcavariants'
-              color='teal'>
-              <Flex
-                flexDirection='row'
-                gap={3}
-                alignItems="center">
-                <Icon as={SettingsIcon} color='teal' />
-                Configure
-              </Flex>
-            </ChakraLink>
+            {allAbstractCostDrivers.length === 0 ?
+              <Box>
+                Cost Drivers not found
+                <ChakraLink
+                  onClick={() => {
+                    setCurrentRightSideBar(undefined);
+                    reactDomNavigator('/lcavariants');
+                  }}
+                  color='teal'>
+                  <Flex
+                    flexDirection='row'
+                    gap={3}
+                    alignItems="center">
+                    <Icon as={SettingsIcon} color='teal' />
+                    Configure
+                  </Flex>
+                </ChakraLink></Box> :
+              <Box pb={4}>
+                <Text fontWeight="bold" fontSize="md">Abstract Cost Drivers</Text>
+                {
+                  activityConfiguration.costDrivers.map((abstractCostDriver, index) => {
+                    return <FormControl>
+                      <Flex gap='0' flexDirection='row' mt={2}>
+                        <Select
+                          key={index}
+                          name="abstractCostDriver"
+                          value={abstractCostDriver}
+                          {...(!abstractCostDriver && { placeholder: 'Select abstract cost driver', color: 'red' })}
+                          onChange={(event) => handleAbstractCostDrivers(index, event.target.value)}
+                          bg="white"
+                        >
+                          {allAbstractCostDrivers
+                            .filter(alternativeAbstractCostDriver => !activityConfiguration.costDrivers.includes(alternativeAbstractCostDriver.id) || alternativeAbstractCostDriver.id === abstractCostDriver)
+                            .map(abstractCostDriver => {
+                              return <option style={{ color: 'black' }} value={abstractCostDriver.id} key={abstractCostDriver.id}>{abstractCostDriver.name}</option>
+                            })}
+                        </Select>
+                        <IconButton icon={<CloseIcon />} onClick={() => removeAbstractCostDriver(index)} />
+                      </Flex>
+                    </FormControl>
+                  })
+                }
 
-
-            <Box p={4}>
-              {variants.map((variant, variantIndex) => {
-                const nodeMappings = variant.mappings.filter(mapping => mapping.task === nodeId);
-                return (
-                  <Box key={variantIndex}>
-                    <Flex><Text>Variant: </Text><Text fontWeight="bold">{variant.name}</Text></Flex>
-                    <UnorderedList>
-                      {nodeMappings.length > 0 ? (
-                        nodeMappings.map((mapping, mappingIndex) => (
-                          <ListItem key={mappingIndex}>
-                            <Text>
-                              {mapping.abstractDriver} -
-                              {
-                                allCostDrivers
-                                  .flatMap(driver => driver.concreteCostDrivers)
-                                  .find(driver => driver.id === mapping.concreteDriver)?.name || 'Not found'
-                              }
-                            </Text>
-                          </ListItem>
-                        ))
-                      ) : (
-                        <ListItem>
-                          <Text>No mappings in variant "{variant.name}"</Text>
-                        </ListItem>
-                      )}
-                    </UnorderedList>
-                  </Box>
-                );
-              })}
-            </Box>
+                <ButtonGroup size='md' isAttached variant="outline" >
+                  <IconButton icon={<AddIcon />} disabled={activityConfiguration.costDrivers.filter(abstractCostDriver => !abstractCostDriver).length} onClick={() => addAbstractCostDriver()} />
+                </ButtonGroup>
+              </Box>
+            }
           </AccordionPanel>
         </AccordionItem>
       </Accordion>
