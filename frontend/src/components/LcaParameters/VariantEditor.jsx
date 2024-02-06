@@ -38,6 +38,7 @@ export default function VariantEditor({ costVariant, allCostDrivers, saveCostVar
       concreteDriverValid: !!mapping.concreteDriver
     }));
     setMappingValidations(initialValidations);
+    setShowMappings([...showMappings, true]);
   }, [driverMapping]);
 
   const [showMappings, setShowMappings] = useState(driverMapping.map(() => true));
