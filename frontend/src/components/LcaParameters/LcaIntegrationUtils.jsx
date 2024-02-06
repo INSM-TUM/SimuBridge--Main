@@ -79,6 +79,7 @@ export const handleButtonClick = async (apiUrl, isApiUrlValid,
           }
       
           setIsFetchingRunning(true);
+          setFetchingProgress(0);
       
           try {
             const client = new o.IpcClient.on(apiUrl);
