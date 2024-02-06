@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
 
 import {
-  Card, CardHeader, CardBody, Heading, Stack, Flex, Text,
+  Card, CardHeader, CardBody, Heading, Text,
+  Stack, Flex, VStack,
   Input, NumberInput, NumberInputField, NumberInputStepper, NumberIncrementStepper, NumberDecrementStepper,
-  Select, Button, IconButton, VStack
+  Select, Button, IconButton,
+  SlideFade
 } from '@chakra-ui/react';
 
 import { FiSave, FiSlash } from 'react-icons/fi';
@@ -38,14 +40,27 @@ export default function VariantEditor({ costVariant, allCostDrivers, saveCostVar
     setMappingValidations(initialValidations);
   }, [driverMapping]);
 
+  const [showMappings, setShowMappings] = useState(driverMapping.map(() => true));
+
   const addNewDriverMapping = () => {
     setDriverMapping([...driverMapping, { abstractDriver: '', concreteDriver: '' }]);
+    setShowMappings([...showMappings, true]);
   };
 
   const removeDriverMapping = (index) => {
-    const updatedMappings = driverMapping.filter((_, idx) => idx !== index);
-    setDriverMapping(updatedMappings);
+    let updatedShowMappings = [...showMappings];
+    updatedShowMappings[index] = false;
+    setShowMappings(updatedShowMappings);
+  
+    setTimeout(() => {
+      const updatedMappings = driverMapping.filter((_, idx) => idx !== index);
+      setDriverMapping(updatedMappings);
+  
+      const updatedVisibility = showMappings.filter((_, idx) => idx !== index);
+      setShowMappings(updatedVisibility);
+    }, 300);
   };
+  
 
   const updateVariantDetails = (field, value) => {
     if (field === 'name') {
@@ -154,42 +169,43 @@ export default function VariantEditor({ costVariant, allCostDrivers, saveCostVar
             </NumberInput>
           </Flex>
           {driverMapping.map((mapping, index) => (
-            <Flex key={index} mt={3} alignItems="center">
-              <Text mr={3}>{index + 1}.</Text>
-              <Select
-                placeholder="Select Abstract Driver"
-                value={mapping.abstractDriver}
-                onChange={(e) => updateMapping(index, 'abstractDriver', e.target.value)}
-                isInvalid={!mappingValidations[index]?.abstractDriverValid}
-                errorBorderColor='red.300'
-                mr={3}>
-                {abstractDriverNames.map(name => (
-                  <option value={name} key={name}>{name}</option>
-                ))}
-              </Select>
-              <Select placeholder="Select Concrete Driver"
-                value={mapping.concreteDriver}
-                onChange={(e) => updateMapping(index, 'concreteDriver', e.target.value)}
-                isInvalid={!mappingValidations[index]?.concreteDriverValid}
-                errorBorderColor='red.300'
-              >
-                {allCostDrivers
-                  .find(driver => driver.name === mapping.abstractDriver)?.concreteCostDrivers
-                  .map(concreteDriver => (
-                    <option value={concreteDriver.id} key={concreteDriver.id}>{concreteDriver.name}</option>
+            <SlideFade key={index} in={showMappings[index]} animateOpacity>
+              <Flex mt={3} alignItems="center">
+                <Text mr={3}>{index + 1}.</Text>
+                <Select
+                  placeholder="Select Abstract Driver"
+                  value={mapping.abstractDriver}
+                  onChange={(e) => updateMapping(index, 'abstractDriver', e.target.value)}
+                  isInvalid={!mappingValidations[index]?.abstractDriverValid}
+                  errorBorderColor='red.300'
+                  mr={3}>
+                  {abstractDriverNames.map(name => (
+                    <option value={name} key={name}>{name}</option>
                   ))}
-              </Select>
-              <IconButton
-                aria-label="Remove mapping"
-                icon={<AiOutlineMinusCircle />}
-                isRound={true}
-                ml={2}
-                colorScheme="teal"
-                variant="outline"
-                onClick={() => removeDriverMapping(index)}
-
-              />
-            </Flex>
+                </Select>
+                <Select placeholder="Select Concrete Driver"
+                  value={mapping.concreteDriver}
+                  onChange={(e) => updateMapping(index, 'concreteDriver', e.target.value)}
+                  isInvalid={!mappingValidations[index]?.concreteDriverValid}
+                  errorBorderColor='red.300'
+                >
+                  {allCostDrivers
+                    .find(driver => driver.name === mapping.abstractDriver)?.concreteCostDrivers
+                    .map(concreteDriver => (
+                      <option value={concreteDriver.id} key={concreteDriver.id}>{concreteDriver.name}</option>
+                    ))}
+                </Select>
+                <IconButton
+                  aria-label="Remove mapping"
+                  icon={<AiOutlineMinusCircle />}
+                  isRound={true}
+                  ml={2}
+                  colorScheme="teal"
+                  variant="outline"
+                  onClick={() => removeDriverMapping(index)}
+                />
+              </Flex>
+            </SlideFade>
           ))}
           <Button
             onClick={addNewDriverMapping}
