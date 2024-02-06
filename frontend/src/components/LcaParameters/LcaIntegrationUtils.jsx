@@ -2,7 +2,8 @@ import SimulationModelModdle from "simulation-bridge-datamodel/DataModel";
 import * as o from "olca-ipc";
 
 export const processApiResponse = async (client, data, 
-    getData, setFetchingProgress, toasting, impactMethodId,
+    getData, setFetchingProgress, setIsFetchingRunning,
+    toasting, impactMethodId,
     setAllCostDrivers, setIsCostDriversLoaded) => {
         const impactMethod = await client.get(
             o.RefType.ImpactMethod,
@@ -64,13 +65,14 @@ export const processApiResponse = async (client, data,
       
           await getData().saveCurrentScenario();
           toasting("success", "Success", "Cost drivers were successfully saved to the application");
+          setIsFetchingRunning(false);
           setAllCostDrivers(abstractCostDrivers);
           setIsCostDriversLoaded(true);
 };
 
 export const handleButtonClick = async (apiUrl, isApiUrlValid, 
-    setIsFetchingRunning, setFetchingProgress, impactMethodId, 
-    toasting, processApiResponseBound, getData, setAllCostDrivers, setIsCostDriversLoaded) => {
+    setIsFetchingRunning, setFetchingProgress,
+    toasting, processApiResponseBound) => {
         if (!isApiUrlValid) {
             toasting("error", "Invalid URL", "Please enter a valid URL in the format 'http://[host]:[port]'");
             return;
@@ -86,8 +88,6 @@ export const handleButtonClick = async (apiUrl, isApiUrlValid,
             toasting("info", "Success", "Cost drivers fetched successfully. Normalizing results...");
             setFetchingProgress(1/(systems.length + 1) * 100);
             await processApiResponseBound(client, systems);
-      
-            setIsFetchingRunning(false);
           }
           catch (error) {
             setIsFetchingRunning(false);

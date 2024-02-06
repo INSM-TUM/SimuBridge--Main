@@ -5,7 +5,7 @@ import { Link as ReactRouterLink } from "react-router-dom";
 import {
   Box, Heading, Card, CardHeader, CardBody,
   Button, Flex, Text, Alert, AlertIcon, AlertDescription,
-  UnorderedList, ListItem, Link as ChakraLink, LinkProps,
+  UnorderedList, ListItem, Link as ChakraLink,
   Accordion, AccordionItem, AccordionPanel, AccordionButton
 } from '@chakra-ui/react';
 

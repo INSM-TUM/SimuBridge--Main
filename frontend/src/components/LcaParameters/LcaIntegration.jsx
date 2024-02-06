@@ -5,7 +5,8 @@ import {
   Accordion, AccordionItem, AccordionButton, AccordionPanel, AccordionIcon,
   Flex, Heading, Card, CardHeader, CardBody,
   Text, Input, InputGroup, InputRightElement, InputLeftElement,
-  Select, Button, Progress, Box, Spinner, UnorderedList, ListItem
+  Select, Button, Progress, Box, Spinner,
+  UnorderedList, ListItem
 } from '@chakra-ui/react';
 import { ExternalLinkIcon } from '@chakra-ui/icons';
 
@@ -58,15 +59,14 @@ const LcaIntegration = ({ getData, toasting }) => {
 
   const processApiResponseBound = async (client, data) => {
     await processApiResponse(client, data, 
-      getData, setFetchingProgress, toasting,
-      impactMethodId, setAllCostDrivers, setIsCostDriversLoaded);
+      getData, setFetchingProgress, setIsFetchingRunning,
+      toasting, impactMethodId, setAllCostDrivers, setIsCostDriversLoaded);
 };
 
 const handleButtonClickBound = async () => {
     await handleButtonClick(apiUrl, isApiUrlValid,
       setIsFetchingRunning, setFetchingProgress,
-      impactMethodId, toasting, processApiResponseBound,
-      getData, setAllCostDrivers, setIsCostDriversLoaded);
+      toasting, processApiResponseBound);
 };
 
   const {
@@ -119,6 +119,8 @@ const handleButtonClickBound = async () => {
               <Button
                 onClick={handleButtonClickBound}
                 disabled={isFetchingRunning}
+                isLoading={isFetchingRunning}
+                loadingText='Fetching...'
                 colorScheme='white'
                 variant='outline'
                 border='1px'
