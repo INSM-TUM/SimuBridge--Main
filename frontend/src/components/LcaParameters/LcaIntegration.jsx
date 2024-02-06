@@ -12,9 +12,6 @@ import { ExternalLinkIcon } from '@chakra-ui/icons';
 
 import { processApiResponse, handleButtonClick } from './LcaIntegrationUtils';
 
-import "./styles.css";
-
-
 const LcaIntegration = ({ getData, toasting }) => {
   //vars
   const defaultApiUrl = 'http://localhost:8081';

@@ -25,6 +25,11 @@ export default function VariantEditor({ costVariant, allCostDrivers, saveCostVar
   const [frequency, setFrequency] = useState(isNewVariant ? defaultFrequency : costVariant.frequency);
   const [mappingValidations, setMappingValidations] = useState([]);
 
+  const formatFrequency = (val) => val + `%`;
+  const updateFrequency = (val) => {
+    updateVariantDetails('frequency', val.replace(/^\%/, ''));
+  }
+
   useEffect(() => {
     setDriverMapping(costVariant.mappings || []);
     setVariantName(costVariant.name || '');
@@ -157,10 +162,11 @@ export default function VariantEditor({ costVariant, allCostDrivers, saveCostVar
             />
             <NumberInput
               placeholder="Frequency"
-              value={frequency}
+              onChange={(valueString) => updateFrequency(valueString)}
+              value={formatFrequency(frequency)}
+              step={1}
               defaultValue={defaultFrequency} min={minFrequency} max={maxFrequency}
               ml={3}
-              onChange={(value) => updateVariantDetails('frequency', value)}
             >
               <NumberInputField />
               <NumberInputStepper>

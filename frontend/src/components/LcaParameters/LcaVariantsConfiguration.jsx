@@ -3,11 +3,14 @@ import { v4 as uuidv4 } from 'uuid';
 import { Link as ReactRouterLink } from "react-router-dom";
 
 import {
-  Box, Heading, Card, CardHeader, CardBody,
+  Box, Heading, Progress, Tooltip,
+  Card, CardHeader, CardBody,
   Button, Flex, Text, Alert, AlertIcon, AlertDescription,
   UnorderedList, ListItem, Link as ChakraLink,
   Accordion, AccordionItem, AccordionPanel, AccordionButton
 } from '@chakra-ui/react';
+
+import { CheckCircleIcon, WarningIcon } from '@chakra-ui/icons';
 
 import { FiEdit, FiTrash2 } from 'react-icons/fi';
 
@@ -49,10 +52,15 @@ function LcaVariantsConfiguration({ getData, toasting }) {
 
     setVariants(updatedVariants);
 
-    await saveCostVariant(allCostDrivers, variant, variants, updatedVariants, getData, toasting);
+    console.log("Varinant: ", variant);
+    await saveCostVariant(allCostDrivers, variant, //variants,
+       updatedVariants, getData, toasting);
 
     setCurrentVariant({ name: '', mappings: [], frequency: 15 });
     toasting("success", "Variant saved", "Cost variant saved successfully");
+    if(updatedVariants.reduce((sum, variant) => sum + parseInt(variant.frequency), 0) != 100){
+      toasting("warning", "Frequencies sum is not 100%", "For correct simulation, the sum of frequencies must be 100%");
+    }
   };
 
   const editVariant = (variant) => {
@@ -88,7 +96,17 @@ function LcaVariantsConfiguration({ getData, toasting }) {
         <Box>
           <Card my={2}>
             <CardHeader>
-              <Heading size='md'>Saved Variants (Total: {variants.length})</Heading>
+              <Flex alignItems="center">
+                <Heading flex="1" size='md'>Saved Variants (Total: {variants.length})</Heading>
+                <Text fontSize="sm" color='gray.500' mr={2}>Σ frequencies: {
+                  variants.reduce((sum, variant) => sum + parseInt(variant.frequency), 0)}%
+                </Text>
+                <Tooltip label='For correct simulation, the sum of frequencies must be 100%'>
+                  {variants.reduce((sum, variant) => sum + parseInt(variant.frequency), 0) === 100 ?
+                    <CheckCircleIcon color='green.500' /> :
+                    <WarningIcon color='red.500' />}
+                </Tooltip>
+              </Flex>
             </CardHeader>
             <CardBody>
               <Accordion allowMultiple>
@@ -101,6 +119,8 @@ function LcaVariantsConfiguration({ getData, toasting }) {
                             {variant.name}
                           </Text>
                         </Box>
+                        <Text fontSize="sm" color='gray.500' mr={2}>{variant.frequency}%</Text>
+                        <Progress value={variant.frequency} max={100} colorScheme='teal' size='sm' w='100px' mr={2} />
                         <Button
                           colorScheme='white'
                           variant='outline'

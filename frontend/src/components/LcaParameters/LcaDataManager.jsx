@@ -1,6 +1,7 @@
 import SimulationModelModdle from "simulation-bridge-datamodel/DataModel";
 
-export const saveCostVariant = async (allCostDrivers, variant, variants, updatedVariants, getData) => {
+export const saveCostVariant = async (allCostDrivers, variant, //variants,
+     updatedVariants, getData) => {
     //save variants and its mappings
     let driversMappings = variant.mappings.map(mapping => {
         return SimulationModelModdle.getInstance().create("simulationmodel:DriversMapping", {
@@ -15,7 +16,7 @@ export const saveCostVariant = async (allCostDrivers, variant, variants, updated
         frequency: variant.frequency,
         mappings: driversMappings,
     });
-    let updatedVariantsObject = [...variants.filter(v => v.id !== variant.id), variantExtended];
+    let updatedVariantsObject = [...updatedVariants.filter(v => v.id !== variant.id), variantExtended];
     const environmentMappingConfig =
         SimulationModelModdle.getInstance().create("simulationmodel:EnvironmentMappingConfig", {
             variants: updatedVariantsObject,
