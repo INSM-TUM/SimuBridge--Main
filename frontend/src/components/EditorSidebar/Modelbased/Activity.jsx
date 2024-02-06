@@ -227,7 +227,7 @@ const Activity = ({ getData, currentElement, setCurrentRightSideBar }) => {
                   })
                 }
 
-                <ButtonGroup size='md' isAttached variant="outline" >
+                <ButtonGroup size='md' isAttached variant="outline" mt={2} >
                   <IconButton icon={<AddIcon />} disabled={activityConfiguration.costDrivers.filter(abstractCostDriver => !abstractCostDriver).length} onClick={() => addAbstractCostDriver()} />
                 </ButtonGroup>
               </Box>
