@@ -25,7 +25,7 @@ const Activity = ({ getData, currentElement, setCurrentRightSideBar }) => {
     const scenario = getData().getCurrentScenario();
 
     if (scenario) {
-      const costDrivers = scenario.resourceParameters.environmentalCostDrivers;
+      const costDrivers = scenario.resourceParameters.costDrivers;
       if (costDrivers) {
         setAllAbstractCostDrivers(costDrivers);
       }

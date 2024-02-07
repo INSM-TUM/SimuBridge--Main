@@ -35,13 +35,8 @@ export const saveCostVariantConfig = async (getData, allCostDrivers) => {
         return;
     }
 
+    let formattedVariants = [];
     const variants = scenario.resourceParameters.environmentMappingConfig.variants;
-
-    let costVariantConfig = SimulationModelModdle.getInstance().create("simulationmodel:CostVariantConfig", {
-        count: variants.length,
-        variants: [],
-    });
-
     variants.forEach(v => {
         let drivers = [];
         v.mappings.forEach(m => {
@@ -58,15 +53,18 @@ export const saveCostVariantConfig = async (getData, allCostDrivers) => {
         console.log('Drivers:', drivers);
         let costVariant = SimulationModelModdle.getInstance().create("simulationmodel:Variant", {
             id: v.id,
-            name: v.name,
             frequency: v.frequency,
             drivers: drivers,
         });
-        costVariantConfig.variants.push(costVariant);
+        formattedVariants.push(costVariant);
     });
 
-    console.log('COST VARIANT CONFIG:', costVariantConfig);
-    getData().getCurrentScenario().resourceParameters.CostVariantConfig = costVariantConfig;
+    let costVariantConfig = SimulationModelModdle.getInstance().create("simulationmodel:CostVariantConfig", {
+        count: formattedVariants.length,
+        variants: formattedVariants,
+    });
+    console.log('COST VARIANT CONFIG 1:', costVariantConfig);
+    getData().getCurrentScenario().models[0].modelParameter.costVariantConfig = costVariantConfig;
     await getData().saveCurrentScenario();
 }
 
@@ -86,7 +84,8 @@ export const deleteVariant = async (variantId, variants, getData, toasting) => {
 
     updatedCostVariantConfig.variants = updatedCostVariantConfig.variants.filter(v => v.id !== variantId);
     updatedCostVariantConfig.count = updatedCostVariantConfig.variants.length;
-    getData().getCurrentScenario().resourceParameters.CostVariantConfig = updatedCostVariantConfig;
+   //getData().getCurrentScenario().resourceParameters.CostVariantConfig = updatedCostVariantConfig;
+   getData().getCurrentScenario().models[0].modelParameter.CostVariantConfig = updatedCostVariantConfig;
     await getData().saveCurrentScenario();
 
     console.log('CostVariantConfig:', getData().getCurrentScenario().resourceParameters.CostVariantConfig);

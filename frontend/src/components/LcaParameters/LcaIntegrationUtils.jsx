@@ -58,7 +58,7 @@ export const processApiResponse = async (client, data,
       
           const abstractCostDrivers = Array.from(abstractCostDriversMap.values());
       
-          getData().getCurrentScenario().resourceParameters.environmentalCostDrivers = abstractCostDrivers;
+          getData().getCurrentScenario().resourceParameters.costDrivers = abstractCostDrivers;
       
           console.log('Abstract Cost Drivers:', abstractCostDrivers);
           console.log('Resource Parameters:', getData().getCurrentScenario().resourceParameters);

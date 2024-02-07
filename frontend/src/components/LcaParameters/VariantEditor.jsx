@@ -14,7 +14,7 @@ import { AiOutlineMinusCircle } from 'react-icons/ai';
 
 export default function VariantEditor({ costVariant, allCostDrivers, saveCostVariant, setCurrentVariant,
   toasting }) {
-  const defaultFrequency = 15;
+  const defaultFrequency = 50;
   const minFrequency = 0;
   const maxFrequency = 100;
 
@@ -164,8 +164,9 @@ export default function VariantEditor({ costVariant, allCostDrivers, saveCostVar
               placeholder="Frequency"
               onChange={(valueString) => updateFrequency(valueString)}
               value={formatFrequency(frequency)}
-              step={1}
-              defaultValue={defaultFrequency} min={minFrequency} max={maxFrequency}
+              defaultValue={defaultFrequency}
+              min={minFrequency}
+              max={maxFrequency}
               ml={3}
             >
               <NumberInputField />

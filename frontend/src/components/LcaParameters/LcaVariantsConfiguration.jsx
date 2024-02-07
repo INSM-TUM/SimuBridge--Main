@@ -28,7 +28,7 @@ function LcaVariantsConfiguration({ getData, toasting }) {
     const scenario = getData().getCurrentScenario();
 
     if (scenario) {
-      const costDrivers = scenario.resourceParameters.environmentalCostDrivers;
+      const costDrivers = scenario.resourceParameters.costDrivers;
 
       if (costDrivers) {
         const uniqueCostDrivers = Array.from(new Map(costDrivers.map(item => [item.id, item])).values());

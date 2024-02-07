@@ -1,6 +1,6 @@
 // Fix error "Buffer is not defined" from xml-js; https://ethereum.stackexchange.com/questions/140178/referenceerror-buffer-is-not-defined
 import { Buffer } from 'buffer';
-//window.Buffer = window.Buffer || Buffer;
+window.Buffer = window.Buffer || Buffer;
 
 import { json2xml } from 'xml-js';
 import createNewJsonGlob from './GlobConfig.js';
@@ -18,11 +18,25 @@ var options = {
 };
 
 
-export async function convertScenario(scenario) {
+export async function convertScenario(scenarioRaw) {
+    // copy scenarioRaw object
+    const scenario = JSON.parse(JSON.stringify(scenarioRaw));
+
+    // Iterate over each costDriver in the resourceParameters
+    scenario.resourceParameters.costDrivers.forEach(abstractDriver => {
+        // Replace the id of each concreteCostDriver with its name
+        abstractDriver.concreteCostDrivers.forEach(concreteCostDriver => {
+            concreteCostDriver.id = concreteCostDriver.name;
+        });
+    });
+
+    console.log("Scenario: ", scenario);
+
 
     if (!scenario.models.length) throw 'No models to convert were provided';
 
     // create one global configuration:
+    //console.log("Scenario: ", scenario);
     const globalConfig_json = createNewJsonGlob(scenario);
     var globalConfig = json2xml(globalConfig_json, options);
     // create one simulation configuration for each model in a scenario:
