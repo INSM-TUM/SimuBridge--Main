@@ -13,9 +13,10 @@ Assign abstract cost drivers to activities within your process model.
 
 #### Configure Cost Variants Panel
 Use this panel to map abstract cost drivers to concrete cost drivers from dropdown menus.
+Configure the frequency of cost variants to simulate the process instances and calculate the overall environmental impact.
 
 #### Simulation
-Configure the frequency of cost variants to simulate the process instances and calculate the overall environmental impact.
+Get the output of the simulator to view extended XML files.
 
 ## Features
 #### Flexible Simulation
