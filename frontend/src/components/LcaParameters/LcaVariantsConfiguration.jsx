@@ -145,8 +145,6 @@ function LcaVariantsConfiguration({ getData, toasting }) {
                       </AccordionButton>
                     </h2>
                     <AccordionPanel pb={4}>
-                      <Text fontSize="lg" fontWeight="bold">Frequency: {variant.frequency}</Text>
-                      <Text fontSize="lg" fontWeight="bold">Mappings:</Text>
                       <UnorderedList>
                         {variant.mappings.map((mapping, mappingIndex) => (
                           <ListItem key={mappingIndex}>

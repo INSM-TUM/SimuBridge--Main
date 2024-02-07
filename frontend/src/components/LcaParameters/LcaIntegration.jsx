@@ -12,6 +12,20 @@ import { ExternalLinkIcon } from '@chakra-ui/icons';
 
 import { processApiResponse, handleButtonClick } from './LcaIntegrationUtils';
 
+const FormattedConcreteDriver = ({ concreteCostDriver }) => {
+  let number = concreteCostDriver.cost;
+  const [coefficient, exponent] = number.toExponential(2).split('e'); // Split into coefficient and exponent
+  const formattedNumber = `${coefficient} × 10`;
+
+  return (
+    <Box>
+      <Text as="span">{concreteCostDriver.name}: </Text>
+      <Text as="span">{formattedNumber}</Text>
+      <Text as="sup" fontWeight={"bold"}>{parseInt(exponent, 10)}</Text>
+    </Box>
+  );
+};
+
 const LcaIntegration = ({ getData, toasting }) => {
   //vars
   const defaultApiUrl = 'http://localhost:8081';
@@ -170,7 +184,8 @@ const handleButtonClickBound = async () => {
                       <UnorderedList>
                         {costDriver.concreteCostDrivers.map((concreteCostDriver, index) => (
                           <ListItem key={index}>
-                            {concreteCostDriver.name}: {concreteCostDriver.cost}
+                            {/* {concreteCostDriver.name}: {concreteCostDriver.cost} */}
+                            <FormattedConcreteDriver concreteCostDriver={concreteCostDriver} />
                           </ListItem>
                         ))}
                       </UnorderedList>
