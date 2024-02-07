@@ -21,10 +21,6 @@ async function createSimConfig(scenario, processModel) {
       elementsById
     } = await moddle.fromXML(processModel.BPMN, 'bpmn:Definitions');
 
-    // TODO: check if costVariantConfig is in scenario
-    //costVariantConfig._attributes = { count: scenario.resourceParameters.costVariantConfig.count };
-    //costVariantConfig.variant = conv_ele.createVariants(scenario.resourceParameters.costVariantConfig.variants);
-    //simConfig.costVariantConfig = costVariantConfig;
     costVariantConfig._attributes = { count: processModel.modelParameter.costVariantConfig.count };
     costVariantConfig.variant = conv_ele.createVariants(processModel.modelParameter.costVariantConfig.variants);
     simConfig.costVariantConfig = costVariantConfig;

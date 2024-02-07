@@ -30,9 +30,6 @@ export async function convertScenario(scenarioRaw) {
         });
     });
 
-    console.log("Scenario: ", scenario);
-
-
     if (!scenario.models.length) throw 'No models to convert were provided';
 
     // create one global configuration:
@@ -44,6 +41,7 @@ export async function convertScenario(scenarioRaw) {
     const simConfigs = await Promise.all(scenario.models.map(async currentModel => {
         const simConfig_json = await createNewJsonSim(scenario, currentModel);
         var simConfig = json2xml(simConfig_json, options);
+        console.log('SimConfig: ', simConfig);
         return simConfig;
     }));
 
