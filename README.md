@@ -27,8 +27,8 @@ View and analyze the environmental impact of process instances through intuitive
 ## Results
 
 
+![Image](https://github.com/INSM-TUM-Teaching/SImuBridge-OLCA/assets/92756562/1297a551-6744-4824-ae9b-1d83934f4a2b)
 
 
 We built the application using the Javascript library React, using the Chakra-UI design framework to ensure a modern look.
 
-The application stores some information in the session storage, namely which projet is currently edited. Most persistence, however, happens using the browser [IndexedDB API](https://developer.mozilla.org/en-US/docs/Web/API/IndexedDB_API), to ensure also large data, such as event logs, can be handled.
