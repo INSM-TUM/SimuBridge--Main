@@ -52,7 +52,7 @@ export const saveCostVariantConfig = async (getData, allCostDrivers) => {
 
         console.log('Drivers:', drivers);
         let costVariant = SimulationModelModdle.getInstance().create("simulationmodel:Variant", {
-            id: v.id,
+            id: v.name,
             frequency: v.frequency,
             drivers: drivers,
         });

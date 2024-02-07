@@ -192,7 +192,7 @@ function createOneVariant(variant) {
     return {
         _attributes : {
             id : variant.id,
-            frequency : variant.frequency
+            frequency : variant.frequency / 100
         },
         driver : variant.drivers.map(driver=> createOneDriver(driver))
     };
