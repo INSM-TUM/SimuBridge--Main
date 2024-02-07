@@ -36,12 +36,13 @@ export async function convertScenario(scenarioRaw) {
     //console.log("Scenario: ", scenario);
     const globalConfig_json = createNewJsonGlob(scenario);
     var globalConfig = json2xml(globalConfig_json, options);
+
     // create one simulation configuration for each model in a scenario:
 
     const simConfigs = await Promise.all(scenario.models.map(async currentModel => {
         const simConfig_json = await createNewJsonSim(scenario, currentModel);
         var simConfig = json2xml(simConfig_json, options);
-        console.log('SimConfig: ', simConfig);
+        //console.log('SimConfig: ', simConfig);
         return simConfig;
     }));
 

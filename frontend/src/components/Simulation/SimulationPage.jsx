@@ -56,7 +56,11 @@ const SimulationPage = ({projectName, getData, toasting }) => {
       const simConfig = simConfigs[0]; //TODO magic index access
       const processModel = scenarioData.models[0]; //TODO magic index access
 
-      const bpmnFile = new File([processModel.BPMN], processModel.name + '.bpmn')
+      let bpmn = processModel.BPMN;
+      bpmn = bpmn.replace(/'/g, "");
+      //console.log('BPMN', bpmn);
+
+      const bpmnFile = new File([bpmn], processModel.name + '.bpmn')
       formData.append("bpmn", bpmnFile, bpmnFile.name);
       const globalConfigFile = new File([globalConfig], scenarioData.scenarioName + '_Global.xml')
       formData.append("globalConfig", globalConfigFile, globalConfigFile.name);
