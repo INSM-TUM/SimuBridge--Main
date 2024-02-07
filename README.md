@@ -26,14 +26,8 @@ Configure simulations with varying cost variants to explore different scenarios.
 View and analyze the environmental impact of process instances through intuitive UI components.
 
 ## Results
-
-
-![Image](https://github.com/INSM-TUM-Teaching/SImuBridge-OLCA/assets/92756562/1297a551-6744-4824-ae9b-1d83934f4a2b)
-
-![Image](https://github.com/INSM-TUM-Teaching/SImuBridge-OLCA/assets/92756562/ae5b1599-1a6f-4a73-bf5b-ae5232a0e054)
-
-![Image](https://github.com/INSM-TUM-Teaching/SImuBridge-OLCA/assets/92756562/c24c77ae-8792-4723-860c-55ba507a290d)
-
+![Image](https://github.com/INSM-TUM-Teaching/SImuBridge-OLCA/assets/92756562/ea167f10-663d-4ea9-8df3-7ece260c61c7)
+![Image](https://github.com/INSM-TUM-Teaching/SImuBridge-OLCA/assets/92756562/c4c45554-4587-4fc5-8bcc-b1eb9a0ce834)
 ![Image](https://github.com/INSM-TUM-Teaching/SImuBridge-OLCA/assets/92756562/8f63b277-1926-44e3-b5f0-0545cf485d22)
 
 
