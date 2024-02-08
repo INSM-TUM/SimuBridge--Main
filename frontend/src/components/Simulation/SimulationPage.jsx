@@ -50,8 +50,8 @@ const SimulationPage = ({projectName, getData, toasting }) => {
 
       const {globalConfig, simConfigs} = await convertScenario(scenarioData);
 
-      //console.log("globalConfig", globalConfig);
-      //console.log("simConfigs", simConfigs[0]);
+      console.log("globalConfig", globalConfig);
+      console.log("simConfigs", simConfigs[0]);
 
       const simConfig = simConfigs[0]; //TODO magic index access
       const processModel = scenarioData.models[0]; //TODO magic index access
