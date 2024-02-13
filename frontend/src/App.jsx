@@ -22,8 +22,8 @@ import BpmnView from './components/ModelbasedParameters/BpmnView';
 import SimulationModelModdle from 'simulation-bridge-datamodel/DataModel';
 import ModelBasedOverview from './components/TablesOverviewComparison/ModelBasedOverview';
 import { ModelData, ScenarioData } from './util/DataHandles';
-import LcaIntegration from './components/LcaParameters/LcaIntegration';
-import LcaVariantsConfiguration from './components/LcaParameters/LcaVariantsConfiguration';
+import LcaIntegration from './components/Lca/Components/LcaIntegration';
+import LcaVariantsConfiguration from './components/Lca/Components/LcaVariantsConfiguration';
 
 const errorsToWarn = [
   "Warning:",

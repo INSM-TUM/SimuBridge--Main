@@ -10,47 +10,29 @@ import {
 } from '@chakra-ui/react';
 import { ExternalLinkIcon } from '@chakra-ui/icons';
 
-import { processApiResponse, handleButtonClick } from './LcaIntegrationUtils';
-
-const FormattedConcreteDriver = ({ concreteCostDriver }) => {
-  let number = concreteCostDriver.cost;
-  const [coefficient, exponent] = number.toExponential(2).split('e'); // Split into coefficient and exponent
-  const formattedNumber = `${coefficient} × 10`;
-
-  return (
-    <Box>
-      <Text as="span">{concreteCostDriver.name}: </Text>
-      <Text as="span">{formattedNumber}</Text>
-      <Text as="sup" fontWeight={"bold"}>{parseInt(exponent, 10)}</Text>
-    </Box>
-  );
-};
+import { fetchAllCostDrivers, calculateCostDrivers } from '../Logic/LcaIntegrationUtils';
+import { getCostDriversFromScenario, mapAbstractDriversFromConcrete, saveAllCostDrivers } from "../Logic/LcaDataManager";
+import FormattedConcreteDriver from './FormattedConcreteDriver';
 
 const LcaIntegration = ({ getData, toasting }) => {
   //vars
   const defaultApiUrl = 'http://localhost:8081';
   const [apiUrl, setApiUrl] = useState(defaultApiUrl);
+  const impactMethodId = 'b4571628-4b7b-3e4f-81b1-9a8cca6cb3f8'; //TODO: fix magic string
   const [isApiUrlValid, setIsApiUrlValid] = useState(true);
   const [isFetchingRunning, setIsFetchingRunning] = useState(false);
   const [fetchingProgress, setFetchingProgress] = useState(-1);
-  const [isScenarioModelLoaded, setIsScenarioModelLoaded] = useState(true);
-  const impactMethodId = 'b4571628-4b7b-3e4f-81b1-9a8cca6cb3f8';
+  const [isScenarioModelLoaded, setIsScenarioModelLoaded] = useState(false);
   const [allCostDrivers, setAllCostDrivers] = useState([]);
   const [isCostDriversLoaded, setIsCostDriversLoaded] = useState(false);
 
   //init
   useEffect(() => {
-    const scenario = getData().getCurrentScenario();
-
-    if (scenario) {
-      const costDrivers = scenario.resourceParameters.costDrivers;
-      if (costDrivers) {
-        const uniqueCostDrivers = Array.from(new Map(costDrivers.map(item => [item.id, item])).values());
-        setAllCostDrivers(uniqueCostDrivers);
-        setIsCostDriversLoaded(uniqueCostDrivers.length > 0);
-      }
-    }
-  }, []);
+    const uniqueCostDrivers = getCostDriversFromScenario(getData);
+    setAllCostDrivers(uniqueCostDrivers);
+    setIsCostDriversLoaded(uniqueCostDrivers.length > 0);
+    setIsScenarioModelLoaded(true);
+  }, [getData]);
 
   const handleApiUrlChange = (event) => {
     const value = event.target.value;
@@ -68,22 +50,50 @@ const LcaIntegration = ({ getData, toasting }) => {
     setIsApiUrlValid(true);
   };
 
-  const processApiResponseBound = async (client, data) => {
-    await processApiResponse(client, data, 
-      getData, setFetchingProgress, setIsFetchingRunning,
-      toasting, impactMethodId, setAllCostDrivers, setIsCostDriversLoaded);
-};
+  const handleFetchCostsButtonClick = async () => {
+    if (!isApiUrlValid) {
+      toasting("error", "Invalid URL", "Please enter a valid URL in the format 'http://[host]:[port]'");
+      return;
+    }
+    setIsFetchingRunning(true);
+    setFetchingProgress(0);
 
-const handleButtonClickBound = async () => {
-    await handleButtonClick(apiUrl, isApiUrlValid,
-      setIsFetchingRunning, setFetchingProgress,
-      toasting, processApiResponseBound);
-};
+    await fetchAllCostDrivers(apiUrl,
+      (abstractCostDrivers) => {
+        toasting("info", "Success", "Cost drivers fetched successfully. Normalizing results...");
+        setFetchingProgress(1 / (abstractCostDrivers.length + 1) * 100);
+        calculateCostDrivers(apiUrl, impactMethodId, abstractCostDrivers,
+          (progress) => setFetchingProgress(progress),
+          (normalizedCostDrivers) => {
+            const abstractCostDriversMap = mapAbstractDriversFromConcrete(normalizedCostDrivers);
+
+            saveAllCostDrivers(
+              abstractCostDriversMap,
+              getData
+            );
+
+            toasting("success", "Success", "Cost drivers were successfully saved to the application");
+            setIsFetchingRunning(false);
+            setAllCostDrivers(abstractCostDriversMap);
+            setIsCostDriversLoaded(true);
+          },
+          (error) => {
+            setIsFetchingRunning(false);
+            toasting("error", "Error", "Error calculating cost drivers. Please check if the OpenLCA IPC server is running and the URL is correct");
+            console.error('API Error:', error);
+          });
+      },
+      (error) => {
+        setIsFetchingRunning(false);
+        toasting("error", "Error", "Please check if the OpenLCA IPC server is running and the URL is correct");
+        console.error('API Error:', error);
+      }
+    );
+  };
 
   const {
     isOpen: isAlertBoxVisible,
     onClose,
-    onOpen,
   } = useDisclosure({ defaultIsOpen: true })
 
   return (
@@ -128,7 +138,7 @@ const handleButtonClickBound = async () => {
                 <option value={impactMethodId}>EF 3.0 weighted and normalized</option>
               </Select>
               <Button
-                onClick={handleButtonClickBound}
+                onClick={handleFetchCostsButtonClick}
                 disabled={isFetchingRunning}
                 isLoading={isFetchingRunning}
                 loadingText='Fetching...'
@@ -184,7 +194,6 @@ const handleButtonClickBound = async () => {
                       <UnorderedList>
                         {costDriver.concreteCostDrivers.map((concreteCostDriver, index) => (
                           <ListItem key={index}>
-                            {/* {concreteCostDriver.name}: {concreteCostDriver.cost} */}
                             <FormattedConcreteDriver concreteCostDriver={concreteCostDriver} />
                           </ListItem>
                         ))}
@@ -199,4 +208,5 @@ const handleButtonClickBound = async () => {
       </Box>
   );
 };
+
 export default LcaIntegration;

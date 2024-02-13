@@ -1,7 +1,49 @@
 import SimulationModelModdle from "simulation-bridge-datamodel/DataModel";
 
+export const getCostDriversFromScenario = (getData) => {
+    const scenario = getData().getCurrentScenario();
+
+    if (scenario) {
+        const costDrivers = scenario.resourceParameters.costDrivers;
+        if (costDrivers) {
+            const uniqueCostDrivers = Array.from(new Map(costDrivers.map(item => [item.id, item])).values());
+            return uniqueCostDrivers;
+        }
+    }
+    return [];
+};
+
+export const mapAbstractDriversFromConcrete = (concreteCostDrivers) => {
+    let abstractCostDriversMap = new Map();
+    concreteCostDrivers.forEach(el => {
+        let concreteDriver = SimulationModelModdle.getInstance().create("simulationmodel:ConcreteCostDriver", {
+            id: el.id,
+            name: el.name,
+            cost: el.cost,
+        });
+        if (!abstractCostDriversMap.has(el.category)) {
+            let abstractDriver = SimulationModelModdle.getInstance().create("simulationmodel:AbstractCostDriver", {
+                id: el.category,
+                name: el.category,
+                concreteCostDrivers: [concreteDriver]
+            });
+            abstractCostDriversMap.set(el.category, abstractDriver);
+        } else {
+            let abstractDriver = abstractCostDriversMap.get(el.category);
+            abstractDriver.concreteCostDrivers.push(concreteDriver);
+        }
+    }
+    );
+    return Array.from(abstractCostDriversMap.values());
+};
+
+export const saveAllCostDrivers = async (abstractCostDrivers, getData) => {
+    getData().getCurrentScenario().resourceParameters.costDrivers = abstractCostDrivers;
+    await getData().saveCurrentScenario();
+};
+
 export const saveCostVariant = async (allCostDrivers, variant, //variants,
-     updatedVariants, getData) => {
+    updatedVariants, getData) => {
     //save variants and its mappings
     let driversMappings = variant.mappings.map(mapping => {
         return SimulationModelModdle.getInstance().create("simulationmodel:DriversMapping", {
@@ -63,7 +105,7 @@ export const saveCostVariantConfig = async (getData, allCostDrivers) => {
         count: formattedVariants.length,
         variants: formattedVariants,
     });
-    console.log('COST VARIANT CONFIG 1:', costVariantConfig);
+
     getData().getCurrentScenario().models[0].modelParameter.costVariantConfig = costVariantConfig;
     await getData().saveCurrentScenario();
 }
@@ -84,11 +126,9 @@ export const deleteVariant = async (variantId, variants, getData, toasting) => {
 
     updatedCostVariantConfig.variants = updatedCostVariantConfig.variants.filter(v => v.id !== variantId);
     updatedCostVariantConfig.count = updatedCostVariantConfig.variants.length;
-   //getData().getCurrentScenario().resourceParameters.CostVariantConfig = updatedCostVariantConfig;
-   getData().getCurrentScenario().models[0].modelParameter.CostVariantConfig = updatedCostVariantConfig;
+    
+    getData().getCurrentScenario().models[0].modelParameter.CostVariantConfig = updatedCostVariantConfig;
     await getData().saveCurrentScenario();
-
-    console.log('CostVariantConfig:', getData().getCurrentScenario().resourceParameters.CostVariantConfig);
 
     toasting("info", "Variant deleted", "Cost variant deleted successfully");
 };

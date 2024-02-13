@@ -15,7 +15,7 @@ import { CheckCircleIcon, WarningIcon } from '@chakra-ui/icons';
 import { FiEdit, FiTrash2 } from 'react-icons/fi';
 
 import VariantEditor from './VariantEditor';
-import { saveCostVariant, deleteVariant } from './LcaDataManager';
+import { saveCostVariant, deleteVariant } from '../Logic/LcaDataManager';
 
 
 function LcaVariantsConfiguration({ getData, toasting }) {

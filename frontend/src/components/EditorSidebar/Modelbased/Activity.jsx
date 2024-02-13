@@ -13,7 +13,7 @@ import DistributionEditor from '../../DistributionEditor';
 import AbstractModelElementEditor from './AbstractModelElementEditor';
 
 import { distributionToState, stateToDistribution } from '../../../util/Distributions';
-import { saveCostVariantConfig } from '../../LcaParameters/LcaDataManager';
+import { saveCostVariantConfig } from '../../Lca/Logic/LcaDataManager';
 
 
 const Activity = ({ getData, currentElement, setCurrentRightSideBar }) => {
