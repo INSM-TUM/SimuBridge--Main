@@ -8,15 +8,19 @@ This project focuses on **sustainability related information on SimuBridge**. Th
 ## 📦️ Components
 The web application is split into multiple pages, each with dedicated purpose.
 Notably, the discovery and simulator views interact with the external process discovery and simulation tools, respectively.
-#### Configure Process Model
-Assign abstract cost drivers to activities within your process model.
 
-#### Configure Cost Variants Panel
+#### LCA Integration Panel
+Configure LCA with host and port for a flexible data fetching. For now, only availability is the normalization method of EF3.0 to calculate impacts.
+
+#### Configure Cost Drivers nn Process Model 
+Assign abstract cost drivers to activities within your process model in model based parameters panel.
+
+#### LCA Variants Panel
 Use this panel to map abstract cost drivers to concrete cost drivers from dropdown menus.
 Configure the frequency of cost variants to simulate the process instances and calculate the overall environmental impact.
 
 #### Simulation
-Get the output of the simulator to view extended XML files.
+Get the output of the  Scylla simulator to view extended XML files.
 
 ## Features
 #### Flexible Simulation
@@ -26,10 +30,11 @@ Configure simulations with varying cost variants to explore different scenarios.
 View and analyze the environmental impact of process instances through intuitive UI components.
 
 ## Results
+We built the application using the Javascript library React, using the Chakra-UI design framework to ensure a modern look.
 ![Image](https://github.com/INSM-TUM-Teaching/SImuBridge-OLCA/assets/92756562/ea167f10-663d-4ea9-8df3-7ece260c61c7)
 ![Image](https://github.com/INSM-TUM-Teaching/SImuBridge-OLCA/assets/92756562/c4c45554-4587-4fc5-8bcc-b1eb9a0ce834)
 ![Image](https://github.com/INSM-TUM-Teaching/SImuBridge-OLCA/assets/92756562/8f63b277-1926-44e3-b5f0-0545cf485d22)
 
 
-We built the application using the Javascript library React, using the Chakra-UI design framework to ensure a modern look.
+
 
