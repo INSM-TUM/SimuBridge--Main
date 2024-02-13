@@ -16,6 +16,7 @@ import { FiEdit, FiTrash2 } from 'react-icons/fi';
 
 import VariantEditor from './VariantEditor';
 import * as lcaDm from '../Logic/LcaDataManager';
+import BasicSpinner from './BasicSpinner';
 
 
 function LcaVariantsConfiguration({ getData, toasting }) {
@@ -23,6 +24,7 @@ function LcaVariantsConfiguration({ getData, toasting }) {
   const [currentVariant, setCurrentVariant] = useState({ name: '', mappings: [], frequency: 15 });
   const [allCostDrivers, setAllCostDrivers] = useState([]);
   const [isCostDriversLoaded, setIsCostDriversLoaded] = useState(false);
+  const [isScenarioModelLoaded, setIsScenarioModelLoaded] = useState(false);
 
   useEffect(() => {
     const uniqueCostDrivers = lcaDm.getCostDriversFromScenario(getData);
@@ -30,6 +32,7 @@ function LcaVariantsConfiguration({ getData, toasting }) {
     setIsCostDriversLoaded(uniqueCostDrivers.length > 0);
 
     setVariants(lcaDm.getVariants(getData));
+    setIsScenarioModelLoaded(true);
   }, []);
 
   const handleSaveCostVariant = async (variant) => {
@@ -69,6 +72,8 @@ function LcaVariantsConfiguration({ getData, toasting }) {
   };
 
   return (
+    !isScenarioModelLoaded ?
+    <BasicSpinner /> :
     <Box>
       <Heading size='lg'>OpenLCA Variants for {getData().getCurrentScenario().scenarioName}</Heading>
       {!isCostDriversLoaded ?

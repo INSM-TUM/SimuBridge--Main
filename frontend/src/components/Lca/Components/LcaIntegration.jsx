@@ -13,6 +13,7 @@ import { ExternalLinkIcon } from '@chakra-ui/icons';
 import { fetchAllCostDrivers, calculateCostDrivers } from '../Logic/LcaIntegrationUtils';
 import { getCostDriversFromScenario, mapAbstractDriversFromConcrete, saveAllCostDrivers } from "../Logic/LcaDataManager";
 import FormattedConcreteDriver from './FormattedConcreteDriver';
+import BasicSpinner from "./BasicSpinner";
 
 const LcaIntegration = ({ getData, toasting }) => {
   //vars
@@ -98,13 +99,7 @@ const LcaIntegration = ({ getData, toasting }) => {
 
   return (
     !isScenarioModelLoaded ?
-      <Flex
-        height="100vh"
-        justifyContent="center"
-        alignItems="center"
-      >
-        <Spinner size='xl' />
-      </Flex>
+      <BasicSpinner />
       :
       <Box>
         <Card bg="white" mt="25px">
