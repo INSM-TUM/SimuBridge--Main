@@ -1,4 +1,3 @@
-import SimulationModelModdle from "simulation-bridge-datamodel/DataModel";
 import * as o from "olca-ipc";
 
 export const getImpactMethod = async (apiUrl, impactMethodId) => {

@@ -13,6 +13,17 @@ export const getCostDriversFromScenario = (getData) => {
     return [];
 };
 
+export const getVariants = (getData) => {
+    const scenario = getData().getCurrentScenario();
+    
+    if (scenario) {
+        if (scenario.resourceParameters.environmentMappingConfig && scenario.resourceParameters.environmentMappingConfig.variants) {
+            return scenario.resourceParameters.environmentMappingConfig.variants;
+        }
+    }
+    return [];
+};
+
 export const mapAbstractDriversFromConcrete = (concreteCostDrivers) => {
     let abstractCostDriversMap = new Map();
     concreteCostDrivers.forEach(el => {
@@ -42,7 +53,7 @@ export const saveAllCostDrivers = async (abstractCostDrivers, getData) => {
     await getData().saveCurrentScenario();
 };
 
-export const saveCostVariant = async (allCostDrivers, variant, //variants,
+export const saveCostVariant = async (allCostDrivers, variant,
     updatedVariants, getData) => {
     //save variants and its mappings
     let driversMappings = variant.mappings.map(mapping => {
@@ -110,25 +121,22 @@ export const saveCostVariantConfig = async (getData, allCostDrivers) => {
     await getData().saveCurrentScenario();
 }
 
-export const deleteVariant = async (variantId, variants, getData, toasting) => {
-    //delete from configuration
-
+export const deleteVariantFromConfiguration = async (variantId, getData) => {
     const environmentMappingConfig = SimulationModelModdle.getInstance().create("simulationmodel:EnvironmentMappingConfig", {
         variants: getData().getCurrentScenario()
             .resourceParameters.environmentMappingConfig.variants.filter(v => v.id !== variantId),
     });
     getData().getCurrentScenario().resourceParameters.environmentMappingConfig = environmentMappingConfig;
     await getData().saveCurrentScenario();
+};
 
-    // Delete variant from CostVariantConfig for team B
-    let costVariantConfig = getData().getCurrentScenario().resourceParameters.costVariantConfig;
+export const deleteVariantFromCostVariantConfig = async (variantId, getData) => {
+    let costVariantConfig = getData().getCurrentScenario().models[0].modelParameter.costVariantConfig;
     const updatedCostVariantConfig = { ...costVariantConfig };
 
     updatedCostVariantConfig.variants = updatedCostVariantConfig.variants.filter(v => v.id !== variantId);
     updatedCostVariantConfig.count = updatedCostVariantConfig.variants.length;
-    
-    getData().getCurrentScenario().models[0].modelParameter.CostVariantConfig = updatedCostVariantConfig;
-    await getData().saveCurrentScenario();
 
-    toasting("info", "Variant deleted", "Cost variant deleted successfully");
-};
+    getData().getCurrentScenario().models[0].modelParameter.costVariantConfig = updatedCostVariantConfig;
+    await getData().saveCurrentScenario();
+}

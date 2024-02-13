@@ -15,7 +15,7 @@ import { CheckCircleIcon, WarningIcon } from '@chakra-ui/icons';
 import { FiEdit, FiTrash2 } from 'react-icons/fi';
 
 import VariantEditor from './VariantEditor';
-import { saveCostVariant, deleteVariant } from '../Logic/LcaDataManager';
+import * as lcaDm from '../Logic/LcaDataManager';
 
 
 function LcaVariantsConfiguration({ getData, toasting }) {
@@ -25,21 +25,11 @@ function LcaVariantsConfiguration({ getData, toasting }) {
   const [isCostDriversLoaded, setIsCostDriversLoaded] = useState(false);
 
   useEffect(() => {
-    const scenario = getData().getCurrentScenario();
+    const uniqueCostDrivers = lcaDm.getCostDriversFromScenario(getData);
+    setAllCostDrivers(uniqueCostDrivers);
+    setIsCostDriversLoaded(uniqueCostDrivers.length > 0);
 
-    if (scenario) {
-      const costDrivers = scenario.resourceParameters.costDrivers;
-
-      if (costDrivers) {
-        const uniqueCostDrivers = Array.from(new Map(costDrivers.map(item => [item.id, item])).values());
-        setAllCostDrivers(uniqueCostDrivers);
-        setIsCostDriversLoaded(uniqueCostDrivers.length > 0);
-      }
-
-      if (scenario.resourceParameters.environmentMappingConfig && scenario.resourceParameters.environmentMappingConfig.variants) {
-        setVariants(scenario.resourceParameters.environmentMappingConfig.variants);
-      }
-    }
+    setVariants(lcaDm.getVariants(getData));
   }, []);
 
   const handleSaveCostVariant = async (variant) => {
@@ -52,9 +42,8 @@ function LcaVariantsConfiguration({ getData, toasting }) {
 
     setVariants(updatedVariants);
 
-    console.log("Varinant: ", variant);
-    await saveCostVariant(allCostDrivers, variant, //variants,
-       updatedVariants, getData, toasting);
+    await lcaDm.saveCostVariant(allCostDrivers, variant, updatedVariants, getData, toasting);
+    await lcaDm.saveCostVariantConfig(getData, allCostDrivers);
 
     setCurrentVariant({ name: '', mappings: [], frequency: 15 });
     toasting("success", "Variant saved", "Cost variant saved successfully");
@@ -73,7 +62,10 @@ function LcaVariantsConfiguration({ getData, toasting }) {
       setCurrentVariant({ name: '', mappings: [], frequency: 15 });
     }
 
-    await deleteVariant(variantId, variants, getData, toasting);
+    await lcaDm.deleteVariantFromConfiguration(variantId, getData);
+    await lcaDm.deleteVariantFromCostVariantConfig(variantId, getData);
+
+    toasting("info", "Variant deleted", "Cost variant deleted successfully");
   };
 
   return (

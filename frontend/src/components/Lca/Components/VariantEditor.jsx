@@ -12,7 +12,9 @@ import { FiSave, FiSlash } from 'react-icons/fi';
 import { AiOutlineMinusCircle } from 'react-icons/ai';
 
 
-export default function VariantEditor({ costVariant, allCostDrivers, saveCostVariant, setCurrentVariant,
+export default function VariantEditor({ costVariant,
+  allCostDrivers,
+  saveCostVariant, setCurrentVariant,
   toasting }) {
   const defaultFrequency = 50;
   const minFrequency = 0;
@@ -43,7 +45,7 @@ export default function VariantEditor({ costVariant, allCostDrivers, saveCostVar
       concreteDriverValid: !!mapping.concreteDriver
     }));
     setMappingValidations(initialValidations);
-    setShowMappings([...showMappings, true]);
+    setShowMappings(driverMapping.map(() => true));
   }, [driverMapping]);
 
   const [showMappings, setShowMappings] = useState(driverMapping.map(() => true));
@@ -57,16 +59,16 @@ export default function VariantEditor({ costVariant, allCostDrivers, saveCostVar
     let updatedShowMappings = [...showMappings];
     updatedShowMappings[index] = false;
     setShowMappings(updatedShowMappings);
-  
+
     setTimeout(() => {
       const updatedMappings = driverMapping.filter((_, idx) => idx !== index);
       setDriverMapping(updatedMappings);
-  
+
       const updatedVisibility = showMappings.filter((_, idx) => idx !== index);
       setShowMappings(updatedVisibility);
     }, 300);
   };
-  
+
 
   const updateVariantDetails = (field, value) => {
     if (field === 'name') {
@@ -104,7 +106,7 @@ export default function VariantEditor({ costVariant, allCostDrivers, saveCostVar
       name: variantName,
       frequency: frequency
     });
-  }
+  };
 
   return (
     <Card my={2}>
@@ -176,12 +178,13 @@ export default function VariantEditor({ costVariant, allCostDrivers, saveCostVar
               </NumberInputStepper>
             </NumberInput>
           </Flex>
-          {driverMapping.map((mapping, index) => (
+          {driverMapping.map((mapping, index) =>
             <SlideFade key={index} in={showMappings[index]} animateOpacity>
               <Flex mt={3} alignItems="center">
                 <Text mr={3}>{index + 1}.</Text>
                 <Select
                   placeholder="Select Abstract Driver"
+                  key={`abstract${index}`}
                   value={mapping.abstractDriver}
                   onChange={(e) => updateMapping(index, 'abstractDriver', e.target.value)}
                   isInvalid={!mappingValidations[index]?.abstractDriverValid}
@@ -193,6 +196,7 @@ export default function VariantEditor({ costVariant, allCostDrivers, saveCostVar
                 </Select>
                 <Select placeholder="Select Concrete Driver"
                   value={mapping.concreteDriver}
+                  key={`concrete${index}`}
                   onChange={(e) => updateMapping(index, 'concreteDriver', e.target.value)}
                   isInvalid={!mappingValidations[index]?.concreteDriverValid}
                   errorBorderColor='red.300'
@@ -214,7 +218,7 @@ export default function VariantEditor({ costVariant, allCostDrivers, saveCostVar
                 />
               </Flex>
             </SlideFade>
-          ))}
+          )}
           <Button
             onClick={addNewDriverMapping}
             colorScheme='white'
