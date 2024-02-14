@@ -1,11 +1,40 @@
 # SimuBridge-OLCA <br><sub>![CI](https://github.com/INSM-TUM/SimuBridge--Main/actions/workflows/CI.yml/badge.svg)</sub>
 
 ## :information_source: About
-This repository serves as a supplementary branch to the main [SimuBridge](https://github.com/INSM-TUM/SimuBridge) project. It contains the source code for the web application that is the heartpice of the project. Please refer to the [root repository](https://github.com/INSM-TUM/SimuBridge) for overall project documentation.
+This repository is a supplementary branch to the main [SimuBridge](https://github.com/INSM-TUM/SimuBridge) project. It contains the source code for the web application that is the heart piece of the project. Please refer to the [root repository](https://github.com/INSM-TUM/SimuBridge) for overall project documentation.
 
 This project focuses on **sustainability related information on SimuBridge**. The extensions made allows users to assign abstract environmental cost drivers to specific activities, and further refine these into concrete cost drivers for accurate impact assessment. The platform facilitates a deeper understanding of the environmental implications of different operational choices, providing valuable insights for sustainable decision-making.
 
-## 📦️ Components
+## 💻 LCA Components Structure
+We've structured the module to segregate UI components from logic, ensuring maintainability and scalability.
+Lca/
+├── Components/
+│   ├── BasicSpinner.jsx
+│   ├── FormattedConcreteDriver.jsx
+│   ├── LcaIntegration.jsx
+│   ├── LcaVariantsConfiguration.jsx
+│   ├── OlcaConnectionAlert.jsx
+│   └── VariantEditor.jsx
+└── Logic/
+    ├── LcaDataManager.js
+    ├── LcaIntegrationUtils.js
+    └── OpenLcaConnector.js
+
+### Components
+- `BasicSpinner.jsx`: Auxiliary React component for the loading spinner.
+- `FormattedConcreteDriver.jsx`: Component to display formatted data of concrete cost drivers.
+- `LcaIntegration.jsx`: Interface for configuring external LCA data integration.
+- `LcaVariantsConfiguration.jsx`: Manages the mapping of abstract and concrete cost drivers for variants.
+- `VariantEditor.jsx`: UI component for creating or editing variants.
+- `OlcaConnectionAlert.jsx`: Notifies about the OpenLCA connection status.
+
+### Logic
+- `LcaDataManager.js`: Manages app data storage.
+- `LcaIntegrationUtils.js`: Handles requests to external LCA systems.
+- `OpenLcaConnector.js`: Specialized connector for OpenLCA software integration.
+
+
+## 📦️ UI Pages
 The web application is split into multiple pages, each with dedicated purpose.
 Notably, the discovery and simulator views interact with the external process discovery and simulation tools, respectively.
 
