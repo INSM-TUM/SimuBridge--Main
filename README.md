@@ -6,20 +6,21 @@ This repository is a supplementary branch to the main [SimuBridge](https://githu
 This project focuses on **sustainability related information on SimuBridge**. The extensions made allows users to assign abstract environmental cost drivers to specific activities, and further refine these into concrete cost drivers for accurate impact assessment. The platform facilitates a deeper understanding of the environmental implications of different operational choices, providing valuable insights for sustainable decision-making.
 
 ## 💻 LCA Components Structure
-We've structured the module to segregate UI components from logic, ensuring maintainability and scalability.
-Lca/
-├── Components/
-│   ├── BasicSpinner.jsx
-│   ├── FormattedConcreteDriver.jsx
-│   ├── LcaIntegration.jsx
-│   ├── LcaVariantsConfiguration.jsx
-│   ├── OlcaConnectionAlert.jsx
-│   └── VariantEditor.jsx
-└── Logic/
-    ├── LcaDataManager.js
-    ├── LcaIntegrationUtils.js
-    └── OpenLcaConnector.js
-
+The module is structured to segregate UI components from logic.
+  
+Lca/  
+├── Components/  
+│   ├── BasicSpinner.jsx  
+│   ├── FormattedConcreteDriver.jsx  
+│   ├── LcaIntegration.jsx  
+│   ├── LcaVariantsConfiguration.jsx  
+│   ├── OlcaConnectionAlert.jsx  
+│   └── VariantEditor.jsx  
+└── Logic/  
+    ├── LcaDataManager.js  
+    ├── LcaIntegrationUtils.js  
+    └── OpenLcaConnector.js  
+  
 ### Components
 - `BasicSpinner.jsx`: Auxiliary React component for the loading spinner.
 - `FormattedConcreteDriver.jsx`: Component to display formatted data of concrete cost drivers.
