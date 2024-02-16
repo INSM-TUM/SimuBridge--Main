@@ -10,6 +10,7 @@ import defaultConfigMinerOutput from '../fixtures/defaultConfigurationMinerOutpu
 import defaultBpmnMinerOutput from '../fixtures/defaultBpmnMinerOutput.js'
 import defaultEventLog from '../fixtures/defaultXESLog.js'
 
+import lcaTestScenarioData from '../fixtures/lca/lcaTestScenario.json'
 import defaultImpactMethod from '../fixtures/lca/defaultImpactMethod.json'
 import defaultCostDrivers from '../fixtures/lca/defaultCostDrivers.json'
 import defaultCalculatedCostDriver from '../fixtures/lca/defaultCalculatedDriver.json'
@@ -21,11 +22,23 @@ const defaultProjectName = 'testProject';
 const defaultScenarioName = defaultScenarioData.scenarioName;
 const noModelConfigScenarioName = defaultScenarioName + '_noModelConfig';
 
-function loadDefaultProjectData() {
+function loadProjectData(projectNameArg, scenarioName, scenarioData) {
     return cy.wrap((async () => {
         // Default Scenario
-        const defaultScenarioFileName = getScenarioFileName(defaultScenarioName);
-        await setFile(defaultProjectName, defaultScenarioFileName, JSON.stringify(defaultScenarioData));
+        const scenarioFileName = arguments.length === 0 ?
+            getScenarioFileName(defaultScenarioName) :
+            getScenarioFileName(scenarioName);
+
+        const projectName = arguments.length === 0 ?
+            defaultProjectName :
+            projectNameArg;
+
+        await setFile(
+            projectName,
+            scenarioFileName,
+            JSON.stringify(
+                arguments.length === 0 ? defaultScenarioData : scenarioData
+            ));
 
         // Scenario without model data (as if it was newly created)
         const noModelConfigScenarioData = deepCopy(defaultScenarioData);
@@ -100,7 +113,7 @@ describe('Project Management', () => {
     });
 
     it('allows to select an existing project', () => {
-        loadDefaultProjectData().then(() => {
+        loadProjectData().then(() => {
             cy.findByText(defaultProjectName).click();
             expectCurrentProjectToBe(defaultProjectName);
         });
@@ -111,7 +124,7 @@ describe('Inside a project', () => {
     beforeEach(() => {
         cy.visit('http://localhost:3000'); // Necessary duplicate to avoid not being able to click on select project
         // load and open default project:
-        loadDefaultProjectData().then(() => {
+        loadProjectData().then(() => {
             cy.findByText(defaultProjectName).click();
             cy.get('select').select(defaultScenarioName);
         });
@@ -334,7 +347,7 @@ describe('Inside a project', () => {
         });
     });
 
-    describe('LCA Integration Tests', () => {
+    describe('OpenLCA Integration Tests', () => {
         beforeEach(() => {
             cy.intercept(
                 'POST',
@@ -400,6 +413,127 @@ describe('Inside a project', () => {
                     .should('contain', 'Delivery');
             }
             );
+        });
+    });
+});
+
+describe('LCA Configuration Tests', () => {
+    beforeEach(() => {
+        cy.visit('http://localhost:3000');
+
+        loadProjectData(
+            'testProject',
+            lcaTestScenarioData.scenarioName,
+            lcaTestScenarioData
+        ).then(() => {
+            cy.findByText('testProject').click();
+        });
+    });
+
+    describe('Model-based Parameter Page LCA', () => {
+        beforeEach(() => {
+            cy.visit('http://localhost:3000/modelbased');
+            cy.get('select').select(lcaTestScenarioData.scenarioName);
+
+            const field = () => cy.findAllByRole('textbox', { name: /.*cost.*/gi }).first();
+            const selectElement = () => {
+                getModelElement(defaultModelParameter.activities[0].id).click();
+            };
+        });
+
+        it('allows to assign abstract cost drivers', () => {
+            const activities = defaultScenarioData.models[0].modelParameter.activities;
+            cy.get(`g[data-element-id=${activities[0].id}]`).click();
+
+            cy.findByText('OpenLCA Drivers').click();
+            cy.wait(1000);
+            cy.findByText('Abstract Cost Drivers').should('exist');
+            cy.get('div[id="abstractDriversConfigurator"]')
+                .find('button.chakra-button')
+                .should('exist')
+                .click();
+            cy.get('select[name="abstractCostDriver"]')
+                .should('exist')
+                .select('Delivery');
+            cy.get(`g[data-element-id=${activities[1].id}]`)
+                .click();
+            cy.get('select[name="abstractCostDriver"]')
+                .should('not.exist');
+
+            cy.get(`g[data-element-id=${activities[0].id}]`).click({ force: true });
+            cy.get('select[name="abstractCostDriver"]')
+                .should('exist');
+            cy.get('select[name="abstractCostDriver"] option:selected')
+                .should('have.text', 'Delivery');
+        });
+
+        it('displays the saved abstract drivers', () => {
+            const activities = defaultScenarioData.models[0].modelParameter.activities;
+            cy.get(`g[data-element-id=${activities[2].id}]`).click();
+            cy.findByText('OpenLCA Drivers').click();
+            cy.wait(1000);
+            cy.get('select[name="abstractCostDriver"]')
+                .should('be.visible');
+            cy.get('select[name="abstractCostDriver"] option:selected')
+                .should('have.text', 'Filling Material');
+        });
+
+        it('checks unique abstract drivers', () => {
+            const activities = defaultScenarioData.models[0].modelParameter.activities;
+            cy.get(`g[data-element-id=${activities[2].id}]`).click();
+            cy.findByText('OpenLCA Drivers').click();
+            cy.wait(1000);
+            cy.get('select[name="abstractCostDriver"] option')
+                .should('not.have.text', 'Filling Material');
+        });
+    });
+
+    describe('Variants Page LCA', () => {
+        beforeEach(() => {
+            cy.visit('http://localhost:3000/lcavariants');
+            cy.get('select').select(lcaTestScenarioData.scenarioName);
+        });
+
+        it('LCA variant validation', () => {
+            const newVariantName = 'NewVariant';
+            cy.findByRole('textbox', { placeholder: /Variant Name/i }).type(newVariantName);
+            cy.wait(1000);
+            cy.get('button[id="cancelVariantButton"]').should('not.exist');
+            cy.get('button[id="saveVariantButton"]').click();
+            cy.findByText('Invalid input').should('exist');
+            cy.get('div[id^="mapping"]').should('not.exist');
+        });
+
+        it('loads with default values for a new variant', () => {
+            cy.findByRole('textbox', { placeholder: /Variant Name/i }).should('have.value', '');
+            cy.get('input[id="variantFrequencyInput"').should('have.value', '15%');
+        });
+
+        it('adds a new driver mapping', () => {
+            cy.findByText('Add Driver Concretization').click();
+            cy.get('div[id^="mapping"]').should('have.length', 1);
+        });
+
+        it('removes a driver mapping', () => {
+            cy.findByText('Add Driver Concretization').click();
+            cy.get('button[aria-label="Remove mapping"]').first().click();
+            cy.get('div[id^="mapping"]').should('have.length', 0);
+        });
+
+        it('saves a new variant', () => {
+            const newVariantName = 'NewVariant';
+            cy.findByRole('textbox', { placeholder: /Variant Name/i }).type(newVariantName);
+            cy.findByText('Add Driver Concretization').click();
+            cy.get('input[id="variantFrequencyInput"').type('87');
+            cy.get('select[id="abstractDriverSelect"]').select('Shipment');
+            cy.get('select[id="concreteDriverSelect"] option').should('have.length', 5);
+            cy.get('select[id="concreteDriverSelect"]').select('Shipment_B_Lorry');
+            cy.get('button[id="saveVariantButton"]').click();
+            cy.wait(1000);
+            cy.findByText('Variant saved').should('exist');
+            cy.findByRole('textbox', { placeholder: /Variant Name/i }).should('have.value', '');
+            cy.get('input[id="variantFrequencyInput"').should('have.value', '15%');
+            cy.get('button.chakra-accordion__button').should('have.length', 1);
         });
     });
 });

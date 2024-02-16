@@ -201,7 +201,7 @@ const Activity = ({ getData, currentElement, setCurrentRightSideBar }) => {
                     Configure
                   </Flex>
                 </ChakraLink></Box> :
-              <Box pb={4}>
+              <Box id='abstractDriversConfigurator' pb={4}>
                 <Text fontWeight="bold" fontSize="md">Abstract Cost Drivers</Text>
                 {
                   activityConfiguration.costDrivers.map((abstractCostDriver, index) => {

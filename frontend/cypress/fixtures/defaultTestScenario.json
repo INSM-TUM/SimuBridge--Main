@@ -933,43 +933,7 @@
                     }
                 ]
             }
-        ],
-        "costDrivers": [
-            {
-                "id": "Delivery",
-                "concreteCostDrivers": [
-                    {
-                        "id": "Delivery A Lorry",
-                        "cost": 0.00002843
-                    },
-                    {
-                        "id": "Filling Material",
-                        "cost": 0.00001468
-                    }
-                ]
-            }
-        ],
-        "costVariantConfig" : {
-            "count": "100",
-            "variants": [
-                {
-                    "id": "Shipment and delivery over distance A",
-                    "frequency": "0.2",
-                    "drivers": [
-                        {
-                            "id": "Delivery",
-                            "cost": "0.00002843"
-                        },
-                        {
-                            "id": "Filling Material",
-                            "cost": "0.00001468"
-
-                        }
-
-                    ]
-                }
-            ]
-        }
+        ]
     },
     "models": [
         {
@@ -982,9 +946,6 @@
                         "resources": [
                             "Role 3",
                             "Role 5"
-                        ],
-                        "costDrivers": [
-                            "Delivery"
                         ],
                         "cost": 0,
                         "duration": {

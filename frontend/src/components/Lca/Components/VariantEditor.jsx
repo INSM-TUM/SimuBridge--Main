@@ -127,6 +127,7 @@ export default function VariantEditor({ costVariant,
                 onClick={() => {
                   setCurrentVariant({ name: '', mappings: [], frequency: 15 });
                 }}
+                id="cancelVariantButton"
                 colorScheme='white'
                 variant='outline'
                 border='1px'
@@ -139,6 +140,7 @@ export default function VariantEditor({ costVariant,
               </Button>
             }
             <Button
+              id="saveVariantButton"
               onClick={saveVariantClicked}
               colorScheme='white'
               variant='outline'
@@ -156,6 +158,7 @@ export default function VariantEditor({ costVariant,
           <Text>Please specify variant name and frequency</Text>
           <Flex mt={2}>
             <Input
+              id="variantNameInput"
               placeholder="Variant Name"
               value={variantName}
               onChange={(e) => updateVariantDetails('name', e.target.value)}
@@ -163,6 +166,7 @@ export default function VariantEditor({ costVariant,
               errorBorderColor='red.300'
             />
             <NumberInput
+              id="variantFrequencyInput"
               placeholder="Frequency"
               onChange={(valueString) => updateFrequency(valueString)}
               value={formatFrequency(frequency)}
@@ -180,9 +184,10 @@ export default function VariantEditor({ costVariant,
           </Flex>
           {driverMapping.map((mapping, index) =>
             <SlideFade key={index} in={showMappings[index]} animateOpacity>
-              <Flex mt={3} alignItems="center">
+              <Flex mt={3} alignItems="center" id={'mapping' + index}>
                 <Text mr={3}>{index + 1}.</Text>
                 <Select
+                  id="abstractDriverSelect"
                   placeholder="Select Abstract Driver"
                   key={`abstract${index}`}
                   value={mapping.abstractDriver}
@@ -194,7 +199,9 @@ export default function VariantEditor({ costVariant,
                     <option value={name} key={name}>{name}</option>
                   ))}
                 </Select>
-                <Select placeholder="Select Concrete Driver"
+                <Select
+                  id="concreteDriverSelect"
+                  placeholder="Select Concrete Driver"
                   value={mapping.concreteDriver}
                   key={`concrete${index}`}
                   onChange={(e) => updateMapping(index, 'concreteDriver', e.target.value)}
