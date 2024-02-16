@@ -206,8 +206,7 @@ export default function VariantEditor({ costVariant,
                   key={`concrete${index}`}
                   onChange={(e) => updateMapping(index, 'concreteDriver', e.target.value)}
                   isInvalid={!mappingValidations[index]?.concreteDriverValid}
-                  errorBorderColor='red.300'
-                >
+                  errorBorderColor='red.300'>
                   {allCostDrivers
                     .find(driver => driver.name === mapping.abstractDriver)?.concreteCostDrivers
                     .map(concreteDriver => (
