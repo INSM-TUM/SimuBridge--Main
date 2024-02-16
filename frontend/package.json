@@ -96,7 +96,7 @@
     "devDependencies": {
         "@testing-library/cypress": "^8.0.7",
         "cy-verify-downloads": "^0.1.16",
-        "cypress": "^12.17.4",
+        "cypress": "^13.6.4",
         "react-router-dom": "^6.4.3"
     }
 }

@@ -5,6 +5,7 @@ export const getImpactMethod = async (apiUrl, impactMethodId) => {
     const impactMethod = await client.get(
         o.RefType.ImpactMethod,
         { id: impactMethodId, refType: o.RefType.ImpactMethod });
+        console.log('Impact Method:', impactMethod);
     return impactMethod;
 }
 
@@ -46,6 +47,7 @@ export const calculateCostDriver = async (apiUrl, impactMethod,
         }
 
         const driverWeights = await result.getWeightedImpacts();
+        console.log('Driver Weights:', driverWeights);
 
         onSuccess(driverWeights);
     }

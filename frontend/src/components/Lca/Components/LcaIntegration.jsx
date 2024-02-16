@@ -114,6 +114,7 @@ const LcaIntegration = ({ getData, toasting }) => {
                   <ExternalLinkIcon color='gray.300' />
                 </InputLeftElement>
                 <Input
+                  id="apiUrlInput"
                   size="md"
                   type="url"
                   value={apiUrl}
@@ -133,6 +134,7 @@ const LcaIntegration = ({ getData, toasting }) => {
                 <option value={impactMethodId}>EF 3.0 weighted and normalized</option>
               </Select>
               <Button
+                id='fetchButton'
                 onClick={handleFetchCostsButtonClick}
                 disabled={isFetchingRunning}
                 isLoading={isFetchingRunning}
