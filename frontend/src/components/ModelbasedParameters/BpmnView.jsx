@@ -1,174 +1,300 @@
-import React, { useEffect, useState } from "react";
+
+import React, { useEffect, useRef, useState } from "react";
 import Modeler from "bpmn-js/lib/Modeler";
 import "bpmn-js/dist/assets/diagram-js.css";
 import "bpmn-js/dist/assets/bpmn-font/css/bpmn-embedded.css";
-import ViewButtons from "./ViewButtons";
-import axios from "axios";
-import { ButtonGroup, IconButton, Flex, Box } from '@chakra-ui/react'
-import { MinusIcon, AddIcon } from '@chakra-ui/icons';
+
+import {
+  ButtonGroup,
+  IconButton,
+  Flex,
+  Box,
+  Heading,
+  HStack,
+  Text,
+  Divider,
+} from "@chakra-ui/react";
+import { MinusIcon, AddIcon, CloseIcon } from "@chakra-ui/icons";
+
 import TypeSelector from "../EditorSidebar/Modelbased/TypeSelector";
 import { EditorSidebarAlternate } from "../EditorSidebar/EditorSidebar";
 
-function BpmnView({getData, setCurrentRightSideBar}) {
+function BpmnView({
+  getData,
+  setCurrentRightSideBar,
+  sidebarsCollapsed,
+  toggleSidebars,
+}) {
+  const containerRef = useRef(null);
 
-  // State storing the current model
-  const [currentModel, setCurrentModel] = useState("");
-  //state to sore the refrence of the container that caintins the modeler
-  const [containerRef, setContainerRef] = useState(null);
-  //state storing the reference of the bpmn modeler
+  // Store the current model (from your data layer)
+  const [currentModel, setCurrentModel] = useState(null);
+
+  // Store modeler instance
   const [modeler, setModeler] = useState(null);
-  
+
+  // Currently selected BPMN element (businessObject)
   const [currentElement, setCurrentElement] = useState(null);
 
-
-
-  // set the container reference wehen component is mounted
+  // Keep currentElement ref for event callbacks
+  const currentElementRef = useRef(null);
   useEffect(() => {
-    setContainerRef(document.getElementById("container"));
-  }, []);
+    currentElementRef.current = currentElement;
+  }, [currentElement]);
 
+  // Update currentModel when "getData" changes / current model changes
   useEffect(() => {
-    if (currentElement) {
-      setCurrentRightSideBar(<EditorSidebarAlternate title={`Edit ${currentElement?.$type.split(':').pop()} Configuration`} content={<TypeSelector {...{currentElement, getData, currentModel}} />}/>)
-    } else {
-      setCurrentRightSideBar(undefined);
-    }
-  }, [currentElement, getData().getCurrentScenario()]);
-
-  useEffect(() => {
-    setCurrentModel(getData().getCurrentModel());
+    const m = getData()?.getCurrentModel?.();
+    setCurrentModel(m || null);
   }, [getData]);
 
-
-
+  // Create / recreate Modeler when container + model exists
   useEffect(() => {
-    if (!containerRef || !currentModel) return;
+    if (!containerRef.current || !currentModel) return;
 
-    containerRef.innerHTML = "";
-    setModeler(
-      new Modeler({
-        container: containerRef,
-        keyboard: {
-          bindTo: document,
+    // Clear container (important if recreating)
+    containerRef.current.innerHTML = "";
+
+    const instance = new Modeler({
+      container: containerRef.current,
+      keyboard: { bindTo: document },
+      // remove bpmn.io palette/context pad
+      additionalModules: [
+        {
+          contextPad: ["value", {}],
+          contextPadProvider: ["value", {}],
+          palette: ["value", {}],
+          paletteProvider: ["value", {}],
+          dragging: ["value", {}],
+          move: ["value", {}],
+          create: ["value", {}],
         },
+      ],
+    });
 
-        // remove sidebar from bpmn.io which is used to add elements to bpmn diagram
-        additionalModules: [
-          {
-            contextPad: ["value", {}],
-            contextPadProvider: ["value", {}],
-            palette: ["value", {}],
-            paletteProvider: ["value", {}],
-            dragging: ["value", {}],
-            move: ["value", {}],
-            create: ["value", {}],
-          },
-        ],
-      })
-    );
-  }, [containerRef]);
+    setModeler(instance);
 
+    return () => {
+      try {
+        instance.destroy();
+      } catch (e) {
+        // ignore
+      }
+      setModeler(null);
+    };
+  }, [currentModel]);
 
-  // Initialize the BPMN modeler when the container reference and diagram are available
+  // Import definitions when modeler is ready
   useEffect(() => {
     if (!modeler || !currentModel) return;
-    if (modeler.getDefinitions() !== currentModel.rootElement) {
-      modeler.importDefinitions(currentModel.rootElement)
-        .then(({warnings}) => {
-          
-          if (warnings.length) {
-            console.log("BPMN Import Warnings", warnings);
-          }
-          modeler.get("canvas").zoom("fit-viewport", "auto");
-          modeler.get("zoomScroll").stepZoom(-2);
+
+    const defs = modeler.getDefinitions?.();
+    const targetRoot = currentModel?.rootElement;
+
+    if (!targetRoot) return;
+
+    // Only import if different
+    if (defs !== targetRoot) {
+      modeler
+        .importDefinitions(targetRoot)
+        .then(({ warnings }) => {
+          if (warnings?.length) console.log("BPMN Import Warnings", warnings);
+          const canvas = modeler.get("canvas");
+          canvas.zoom("fit-viewport", "auto");
+
+          // Slight zoom-out so it feels less cramped
+          modeler.get("zoomScroll").stepZoom(-1);
         })
         .catch(console.error);
     }
   }, [modeler, currentModel]);
 
-  // zoom into diagram after it is initialized
+  // Wire click handler + cleanup
   useEffect(() => {
     if (!modeler) return;
 
-    modeler.get("zoomScroll").stepZoom(-1);
     const eventBus = modeler.get("eventBus");
-    eventBus.on("element.click", ({element}) => {
-      if (element?.businessObject.$type !== 'bpmn:Process') {
-        setCurrentElement(element.businessObject);
-      } else {
+
+    const onElementClick = ({ element }) => {
+      const bo = element?.businessObject;
+      if (!bo) return;
+
+      // Ignore process root
+      if (bo.$type === "bpmn:Process") {
         setCurrentElement(null);
+        return;
       }
-    });
-  }, [modeler]);      
-      
-        // ensures that diagram is centered if window is resized
-        useEffect(() => {
-    
-          let timeoutId = null;
-          const resizeListener = () => {
-        
-            clearTimeout(timeoutId);
-    
-            console.log("Resize")
-            timeoutId = setTimeout(() => modeler.get('canvas').zoom('fit-viewport', 'auto'), 500);
-          };
-          window.addEventListener('resize', resizeListener);
-      
-          return () => {
-            window.removeEventListener('resize', resizeListener);
-          }
-        }, [currentModel, modeler])
+      setCurrentElement(bo);
+    };
 
-        function zoomIn(){
-          modeler.get('zoomScroll').stepZoom(1)
-        }
-    
-        function zoomOut(){
-          modeler.get('zoomScroll').stepZoom(-1)
-        }
-      
-      
-        return (
-         <Flex>
-            
-          <Box id="container" w="100%" maxWidth="100%" h="90vh">
-          </Box>
-          
+    eventBus.on("element.click", onElementClick);
 
-            <ButtonGroup 
-                size='md' 
-                spacing='6' 
-                variant='unstyled' 
-                position="absolute" 
-                justifyContent="center" 
-                bottom="10" 
-                left="0px" 
-                right="0px">
-                  
-                
-                <IconButton onClick={zoomIn} 
-                    icon={<AddIcon color="RGBA(0, 0, 0, 0.64)" />}  
-                    bg="white"  
-                    _hover={{bg: "blackAlpha.100"}}
-                    rounded="20" 
-                    shadow="md"/>
-                <IconButton 
-                    onClick={zoomOut} 
-                    icon={<MinusIcon color="RGBA(0, 0, 0, 0.64)" />} 
-                    bg="white" 
-                    _hover={{bg: "blackAlpha.100", color: "RGBA(0, 0, 0, 0.94)"}}
-                    rounded="20"
-                    shadow="md" />
-                
-            
-            
-            {/* <ViewButtons/> */}
-            </ButtonGroup>
-          </Flex>
-          
-          
-        );
+    return () => {
+      try {
+        eventBus.off("element.click", onElementClick);
+      } catch (e) {
+        // ignore
+      }
+    };
+  }, [modeler]);
+
+  // Keep diagram centered on resize (debounced)
+  useEffect(() => {
+    if (!modeler) return;
+
+    let timeoutId = null;
+
+    const resizeListener = () => {
+      if (timeoutId) clearTimeout(timeoutId);
+      timeoutId = setTimeout(() => {
+        try {
+          modeler.get("canvas").zoom("fit-viewport", "auto");
+        } catch (e) {
+          // ignore
+        }
+      }, 250);
+    };
+
+    window.addEventListener("resize", resizeListener);
+    return () => {
+      window.removeEventListener("resize", resizeListener);
+      if (timeoutId) clearTimeout(timeoutId);
+    };
+  }, [modeler]);
+
+  // Right sidebar logic (only when NOT collapsed)
+  useEffect(() => {
+    if (currentElement && !sidebarsCollapsed) {
+      setCurrentRightSideBar(
+        <EditorSidebarAlternate
+          title={`Edit ${String(currentElement?.$type || "")
+            .split(":")
+            .pop()} Configuration`}
+          content={<TypeSelector {...{ currentElement, getData, currentModel }} />}
+          collapsed={sidebarsCollapsed}
+          onToggle={toggleSidebars}
+        />
+      );
+    } else {
+      setCurrentRightSideBar(undefined);
+    }
+  }, [
+    currentElement,
+    sidebarsCollapsed,
+    getData,
+    currentModel,
+    toggleSidebars,
+    setCurrentRightSideBar,
+  ]);
+
+  const zoomIn = () => {
+    if (!modeler) return;
+    modeler.get("zoomScroll").stepZoom(1);
+  };
+
+  const zoomOut = () => {
+    if (!modeler) return;
+    modeler.get("zoomScroll").stepZoom(-1);
+  };
+
+  const elementLabel = String(currentElement?.$type || "")
+    .split(":")
+    .pop();
+
+  return (
+    <Flex position="relative" w="100%">
+      {/* BPMN canvas */}
+      <Box ref={containerRef} w="100%" maxW="100%" h="90vh" />
+
+      {/* Collapsed mode: bigger “tile/panel” editor overlay */}
+      {sidebarsCollapsed && currentElement && (
+        <Box
+          position="absolute"
+          right={{ base: "12px", md: "24px" }}
+          top={{ base: "12px", md: "24px" }}
+          w={{ base: "calc(100% - 24px)", sm: "420px", md: "460px" }}
+          maxW="92vw"
+          maxH={{ base: "78vh", md: "82vh" }}
+          bg="white"
+          borderRadius="2xl"
+          boxShadow="0 24px 60px rgba(15, 23, 42, 0.18)"
+          borderWidth="1px"
+          borderColor="gray.100"
+          p={{ base: 4, md: 5 }}
+          overflowY="auto"
+          zIndex={10}
+        >
+          <HStack justify="space-between" align="flex-start" spacing={3} mb={3}>
+            <Box>
+              <Heading size="sm" color="#0F172A">
+                Edit {elementLabel} Configuration
+              </Heading>
+              <Text fontSize="xs" color="gray.500" mt={1}>
+                Adjust parameters for the selected BPMN element.
+              </Text>
+            </Box>
+
+            <IconButton
+              size="md"
+              aria-label="Close configuration"
+              icon={<CloseIcon boxSize={3} />}
+              variant="ghost"
+              borderRadius="xl"
+              _hover={{ bg: "gray.100" }}
+              onClick={() => setCurrentElement(null)}
+            />
+          </HStack>
+
+          <Divider mb={4} />
+
+          <TypeSelector {...{ currentElement, getData, currentModel }} />
+        </Box>
+      )}
+
+      {/* Bigger zoom controls (bigger “tiles”) */}
+      <ButtonGroup
+        size="lg"
+        spacing="4"
+        variant="unstyled"
+        position="absolute"
+        bottom={{ base: 6, md: 10 }}
+        left="0"
+        right="0"
+        display="flex"
+        justifyContent="center"
+        zIndex={5}
+      >
+        <IconButton
+          onClick={zoomIn}
+          aria-label="Zoom in"
+          icon={<AddIcon />}
+          bg="white"
+          _hover={{ bg: "blackAlpha.100" }}
+          borderRadius="2xl"
+          boxShadow="0 14px 30px rgba(15, 23, 42, 0.12)"
+          border="1px solid"
+          borderColor="gray.100"
+          w={{ base: 12, md: 14 }}
+          h={{ base: 12, md: 14 }}
+          fontSize={{ base: "18px", md: "20px" }}
+        />
+        <IconButton
+          onClick={zoomOut}
+          aria-label="Zoom out"
+          icon={<MinusIcon />}
+          bg="white"
+          _hover={{ bg: "blackAlpha.100" }}
+          borderRadius="2xl"
+          boxShadow="0 14px 30px rgba(15, 23, 42, 0.12)"
+          border="1px solid"
+          borderColor="gray.100"
+          w={{ base: 12, md: 14 }}
+          h={{ base: 12, md: 14 }}
+          fontSize={{ base: "18px", md: "20px" }}
+        />
+      </ButtonGroup>
+    </Flex>
+  );
 }
 
 export default BpmnView;
-  

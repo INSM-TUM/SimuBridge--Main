@@ -1,353 +1,953 @@
-import React, { useState, useRef } from "react";
-import { Flex, Heading, Card, CardHeader, CardBody, Text, Select, Stack, Button, Progress, Box, Textarea, UnorderedList, ListItem } from '@chakra-ui/react';
-import { FiChevronDown } from 'react-icons/fi';
+/**
+ * Thsis page is responsible for Proces Mining window
+ * 
+ * 1. User upload the .csv file
+ * 2. Run a process mining tool (Simod)
+ * 3. Show the output of process miner: console output and files
+ * 4. Convert mined output into Scenario to get more insights
+ */
+import { useState, useRef, useMemo } from 'react';
+import {
+  Flex,
+  Heading,
+  Card,
+  CardHeader,
+  CardBody,
+  Text,
+  Select,
+  Stack,
+  Button,
+  Box,
+  SimpleGrid,
+  Icon,
+  HStack,
+  Tooltip,
+  IconButton,
+  Input,
+  Modal,
+  ModalBody,
+  ModalCloseButton,
+  ModalContent,
+  ModalFooter,
+  ModalHeader,
+  ModalOverlay,
+} from '@chakra-ui/react';
+import {
+  FiPlay,
+  FiStopCircle,
+  FiUpload,
+  FiCheckCircle,
+  FiAlertCircle,
+  FiRefreshCw,
+  FiClock,
+  FiFileText,
+  FiActivity,
+  FiChevronUp,
+  FiChevronDown,
+} from 'react-icons/fi';
 import axios from 'axios';
-import untar from "js-untar";
+import untar from 'js-untar';
 import Gzip from 'pako';
-import simodConfiguration from './simod_config.yml'
-import { getFile, getFiles, setFile, uploadFileToProject } from "../../util/Storage";
-import { convertSimodOutput } from "simulation-bridge-converter-simod/simod_converter";
-import RunProgressIndicationBar from "../RunProgressIndicationBar";
-import ToolRunOutputCard from "../ToolRunOutputCard";
+import JSZip from 'jszip';
+import simodConfiguration from './simod_config.yml';
+import {
+  getFile,
+  getFiles,
+  setFile,
+  uploadFileToProject,
+} from '../../util/Storage';
+import { convertSimodOutput } from 'simulation-bridge-converter-simod/simod_converter';
+import RunProgressIndicationBar from '../RunProgressIndicationBar';
+import ToolRunOutputCard from '../ToolRunOutputCard';
 
-
-function getNumberOfInstances(eventLog) {
+function getNumberOfInstances(eventLog, filename) {
+  // Check if it's XES format
+  if (filename?.endsWith('.xes') || eventLog.includes('<trace>')) {
     return eventLog.match(/<trace>/g)?.length || 100;
+  }
+  // For CSV, count unique case IDs (assuming first column or 'case:concept:name')
+  if (filename?.endsWith('.csv') || eventLog.includes(',')) {
+    const lines = eventLog.split('\n').filter(line => line.trim());
+    if (lines.length <= 1) return 100; // No data rows
+    
+    // Try to find case ID column (common names)
+    const header = lines[0].toLowerCase();
+    const caseIdIndex = header.split(',').findIndex(col => 
+      col.includes('case') || col.includes('case_id') || col.includes('caseid')
+    );
+    
+    if (caseIdIndex >= 0) {
+      const caseIds = new Set();
+      for (let i = 1; i < lines.length; i++) {
+        const values = lines[i].split(',');
+        if (values[caseIdIndex]) {
+          caseIds.add(values[caseIdIndex].trim());
+        }
+      }
+      return caseIds.size || 100;
+    }
+  }
+  return 100; // Default fallback
 }
 
-const ProcessMinerPage = ({projectName, getData, toasting }) => {
-
-// Setting initial states of started, finished, and response
+const ProcessMinerPage = ({ projectName, getData, toasting }) => {
   const [started, setStarted] = useState(false);
   const [finished, setFinished] = useState(false);
   const [errored, setErrored] = useState(false);
-  const [response, setResponse] = useState(JSON.parse(sessionStorage.getItem(projectName+'/lastMinerResponse')) || {});
+  const [response, setResponse] = useState(
+    JSON.parse(sessionStorage.getItem(projectName + '/lastMinerResponse')) || {}
+  );
   const [logFile, setLogFile] = useState();
   const [miner, setMiner] = useState();
-  
+
   const [configFile, setConfigFile] = useState();
   const [bpmnFile, setBpmnFile] = useState();
+  const [downloadingFiles, setDownloadingFiles] = useState(false);
+  const [detailsCollapsed, setDetailsCollapsed] = useState(false);
+  const [scenarioModalOpen, setScenarioModalOpen] = useState(false);
+  const [scenarioName, setScenarioName] = useState('');
+  const [converting, setConverting] = useState(false);
 
-  // Creating a reference to the source that can be cancelled if needed
   const source = useRef(null);
-
-
-  // function to start the Miner
+  const outputCardRef = useRef(null);
   const start = async () => {
-    // Resetting response and finished states
     setResponse({ message: '', files: [] });
     setFinished(false);
     window.canceled = false;
     setErrored(false);
-    // Updating the started state
     setStarted(true);
 
-    // Creating a cancel token and assigning it to the current source
     source.current = axios.CancelToken.source();
 
     try {
-        const apiAddress = 'http://127.0.0.1:8880';
-        const formData = new FormData();
-        const eventlogFile = new File([(await getFile(projectName, logFile)).data], logFile);
-        const configurationFile = new File([ await (await fetch(simodConfiguration)).text()], "sample.yml");
-        formData.append("configuration", new Blob([configurationFile], { type: 'application/yaml' }), configurationFile.name);
-        formData.append("event_log", new Blob([eventlogFile], { type: 'application/xml' }), eventlogFile.name);
+      const apiAddress = 'http://127.0.0.1:8880';
+      const formData = new FormData();
+      const eventlogFile = new File(
+        [(await getFile(projectName, logFile)).data],
+        logFile
+      );
+      
+      // Load and modify the configuration to use the actual log file name
+      let configText = await (await fetch(simodConfiguration)).text();
+      configText = configText.replace(
+        /log_path:\s*.+/,
+        `log_path: ${logFile}`
+      );
+      
+      const configurationFile = new File(
+        [configText],
+        'sample.yml'
+      );
+      formData.append(
+        'configuration',
+        new Blob([configurationFile], { type: 'application/yaml' }),
+        configurationFile.name
+      );
+      formData.append(
+        'event_log',
+        new Blob([eventlogFile], { type: 'application/xml' }),
+        eventlogFile.name
+      );
 
-        const DEBUG = JSON.parse(sessionStorage.getItem('DEBUG'));
+      const DEBUG = JSON.parse(sessionStorage.getItem('DEBUG'));
 
-        let status;
-        const requestStartTime = new Date().getTime();
-        if (!DEBUG) {        
-            const r = await axios.post(apiAddress+"/discoveries", formData, {
-                headers: {
-                'Content-Type': 'multipart/form-data',
-                }
-            });
+      let status;
+      const requestStartTime = new Date().getTime();
+      if (!DEBUG) {
+        const r = await axios.post(apiAddress + '/discoveries', formData, {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
+        });
 
-            const { request_id , request_status} = r.data
-            console.log({request_id , request_status})
+        const { request_id, request_status } = r.data;
+        console.log({ request_id, request_status });
 
-            if (request_status !== 'accepted') {
-                throw new Error('Process mining request rejected');
-            }
-            
-            if (window.canceled) {
-                throw new Error('Canceled');
-            }
-            
-            toasting("success", "Success", "Process Mining successfully started");
-            
-            const msPerMinute = 60 * 1000;
-            const maxWaitTimeMs = 60 * msPerMinute;
-            const waitStartTime = new Date().getTime();
-            function sleep(milliseconds) {
-                return new Promise(resolve => setTimeout(resolve, milliseconds));
-            }
-
-            while(true) {
-                const status_request = await axios.get("http://127.0.0.1:8880/discoveries/"+request_id)
-                status = status_request.data;
-                console.log(status_request)
-                if (status.request_status !== 'running') {
-                    break;
-                } else if (new Date().getTime() - waitStartTime > maxWaitTimeMs) {
-                    throw new Error("Process Mining timed out");
-                }
-                await sleep(10000);
-                if (window.canceled) {
-                    throw new Error('Canceled');
-                }
-            }
-        } else {
-            console.log('Using cached result for debugging purposes')
-            status = {request_status : 'success', archive_url : sessionStorage.getItem('lastSimodUrl')}
+        if (request_status !== 'accepted') {
+          throw new Error('Process mining request rejected');
         }
 
-        
-        if(status.request_status === 'success') {
-            console.log(`Request took ${(new Date().getTime() - requestStartTime) / 1000.0} s`)
-            sessionStorage.setItem('lastSimodUrl', status.archive_url); //DEBUG for debugging purposes
-            const result = await fetch(status.archive_url.replace('http://0.0.0.0', apiAddress));
-            const raw = await result.arrayBuffer();
-            const raw_tar = Gzip.inflate(raw).buffer
-            console.log('Files:')
-            console.log(raw_tar)
-            const files = await untar(raw_tar);
-            console.log('Untar finished')
-
-            const relevant_files = files
-                .filter(file => file.name.endsWith('.json') || file.name.endsWith('.bpmn'));
-
-            // Adapts https://github.com/InvokIT/js-untar/blob/49e639cf82e8d58dccb3458cbd08768afee8b41c/src/untar.js#L74
-            // Also includes proposal from https://github.com/InvokIT/js-untar/pull/27
-            function readAsString_safeForLargeFiles(encoding) {
-                var buffer = this.buffer;
-                var charCount = buffer.byteLength;
-                var charSize = 1;
-                var byteCount = charCount * charSize;
-                var bufferView = new DataView(buffer);
-    
-                var charCodes = [];
-
-                
-                encoding = encoding || 'utf-8';
-                if (global.TextDecoder) {				
-                    var decoder = new TextDecoder(encoding);
-                    return (this._string = decoder.decode(this.buffer));
-                } else {
-        
-                    for (var i = 0; i < charCount; ++i) {
-                        var charCode = bufferView.getUint8(i * charSize, true);
-                        charCodes.push(charCode);
-                    }
-        
-                    // Cut up long files into chunks to avoid running into the Javascript argument count. According to StackOverflow, 32k should be fine on most browsers https://stackoverflow.com/questions/22747068/is-there-a-max-number-of-arguments-javascript-functions-can-accept
-                    return (this._string = convertLongCharCodeArrayToString(charCodes, 32000));
-                }
-            }
-
-            function convertLongCharCodeArrayToString(charCodes, chunkSize) {
-                var result = '';
-                var index = 0;
-              
-                while (index < charCodes.length) {
-                  var chunk = charCodes.slice(index, index + chunkSize);
-                  result += String.fromCharCode.apply(null, chunk);
-                  index += chunkSize;
-                }
-              
-                return result;
-              }
-
-            relevant_files
-                .forEach(file => {
-                   file.name = file.name.replace(/\/.*\/(.*trial).*\//, '/$1/');
-                   console.log('Reading file '+file.name);
-                   file.readAsString_safeForLargeFiles = readAsString_safeForLargeFiles;
-                   file.data = file.readAsString_safeForLargeFiles(); 
-                });
-
-            console.log(relevant_files)
-
-            
-            relevant_files.forEach(file => {
-                
-                setFile(projectName, 'simod_results/' + file.name, file.data); // TODO extract magic string 'simod_results'
-            })
-    
-            // Setting the response state and updating the finished and started states
-            const responseObject = {
-                message : 'Miner output currently not captured',
-                files : relevant_files.map(file => file.name),
-                finished : new Date()
-            }
-            setResponse(responseObject);
-            sessionStorage.setItem(projectName+'/lastMinerResponse', JSON.stringify(responseObject));
-            console.log('simod_results/' + relevant_files.find(file => /.*best_result.*simulation_parameters\.json/.test(file.name))?.name)
-            setConfigFile('simod_results/' + relevant_files.find(file => /.*best_result.*simulation_parameters\.json/.test(file.name))?.name)
-            setBpmnFile('simod_results/' + relevant_files.find(file => /.*structure_trial.*\.bpmn/.test(file.name))?.name)
-            setFinished(true);
-            setStarted(false);
-            // Toasting a success message
-            toasting("success", "Success", "Process Mining was successful");
-
-        } else {
-            throw new Error('Process mining terminated unsuccessfully')
+        if (window.canceled) {
+          throw new Error('Canceled');
         }
-    } catch (err) {
-        setStarted(false);
-        setFinished(true);
-      // If there's a cancellation error, toast a success message
-      if (window.canceled || axios.isCancel(err)) {
-        toasting("info", "Canceled", "Process Mining was canceled");
+
+        toasting('success', 'Success', 'Process Mining successfully started');
+
+        const msPerMinute = 60 * 1000;
+        const maxWaitTimeMs = 60 * msPerMinute;
+        const waitStartTime = new Date().getTime();
+        function sleep(milliseconds) {
+          return new Promise(resolve => setTimeout(resolve, milliseconds));
+        }
+
+        while (true) {
+          const status_request = await axios.get(
+            'http://127.0.0.1:8880/discoveries/' + request_id
+          );
+          status = status_request.data;
+          console.log(status_request);
+          if (status.request_status !== 'running') {
+            break;
+          } else if (new Date().getTime() - waitStartTime > maxWaitTimeMs) {
+            throw new Error('Process Mining timed out');
+          }
+          await sleep(10000);
+          if (window.canceled) {
+            throw new Error('Canceled');
+          }
+        }
       } else {
-        // Otherwise, toast an error message
-        console.log(err)
-        toasting("error", "error", "Process Mining was not successful");
+        console.log('Using cached result for debugging purposes');
+        status = {
+          request_status: 'success',
+          archive_url: sessionStorage.getItem('lastSimodUrl'),
+        };
+      }
+
+      if (status.request_status === 'success') {
+        console.log(
+          `Request took ${(new Date().getTime() - requestStartTime) / 1000.0} s`
+        );
+        sessionStorage.setItem('lastSimodUrl', status.archive_url);
+        
+        // Build full URL if archive_url is just a path
+        const archiveUrl = status.archive_url.startsWith('http') 
+          ? status.archive_url.replace('http://0.0.0.0', apiAddress)
+          : apiAddress + status.archive_url;
+        
+        const result = await fetch(archiveUrl);
+        const raw = await result.arrayBuffer();
+        const raw_tar = Gzip.inflate(raw).buffer;
+        console.log('Files:');
+        console.log(raw_tar);
+        const files = await untar(raw_tar);
+        console.log('Untar finished');
+
+        const relevant_files = files.filter(
+          file => {
+            if (file.name.endsWith('.bpmn')) return true;
+            // For JSON files, exclude canonical_model and runtimes
+            if (file.name.endsWith('.json')) {
+              const filename = file.name.toLowerCase();
+              return !filename.includes('canonical_model') && !filename.includes('runtimes');
+            }
+            return false;
+          }
+        );
+
+        function readAsString_safeForLargeFiles(encoding) {
+          var buffer = this.buffer;
+          var charCount = buffer.byteLength;
+          var charSize = 1;
+          var bufferView = new DataView(buffer);
+
+          var charCodes = [];
+
+          encoding = encoding || 'utf-8';
+          if (global.TextDecoder) {
+            var decoder = new TextDecoder(encoding);
+            return (this._string = decoder.decode(this.buffer));
+          } else {
+            for (var i = 0; i < charCount; ++i) {
+              var charCode = bufferView.getUint8(i * charSize, true);
+              charCodes.push(charCode);
+            }
+
+            return (this._string = convertLongCharCodeArrayToString(
+              charCodes,
+              32000
+            ));
+          }
+        }
+
+        function convertLongCharCodeArrayToString(charCodes, chunkSize) {
+          var result = '';
+          var index = 0;
+
+          while (index < charCodes.length) {
+            var chunk = charCodes.slice(index, index + chunkSize);
+            result += String.fromCharCode.apply(null, chunk);
+            index += chunkSize;
+          }
+
+          return result;
+        }
+
+        relevant_files.forEach(file => {
+          file.name = file.name.replace(/\/.*\/(.*trial).*\//, '/$1/');
+          // Clean up file paths - remove leading ./ or / and any double slashes
+          file.name = file.name.replace(/^\.\//,  '').replace(/^\//,  '').replace(/\/\//g, '/');
+          console.log('Reading file ' + file.name);
+          file.readAsString_safeForLargeFiles = readAsString_safeForLargeFiles;
+          file.data = file.readAsString_safeForLargeFiles();
+        });
+
+        console.log(relevant_files);
+
+        relevant_files.forEach(file => {
+          setFile(projectName, 'simod_results/' + file.name, file.data);
+        });
+
+        const responseObject = {
+          message: 'Miner output currently not captured',
+          files: relevant_files.map(file => file.name),
+          finished: new Date(),
+        };
+        setResponse(responseObject);
+        sessionStorage.setItem(
+          projectName + '/lastMinerResponse',
+          JSON.stringify(responseObject)
+        );
+        // Find config file - any .json file
+        const configFileMatch = relevant_files.find(file =>
+          file.name.endsWith('.json')
+        );
+        console.log('Config file found:', configFileMatch?.name);
+        
+        if (configFileMatch) {
+          setConfigFile('simod_results/' + configFileMatch.name);
+        }
+        
+        // Find BPMN file - any .bpmn file
+        const bpmnFileMatch = relevant_files.find(file =>
+          file.name.endsWith('.bpmn')
+        );
+        console.log('BPMN file found:', bpmnFileMatch?.name);
+        
+        if (bpmnFileMatch) {
+          setBpmnFile('simod_results/' + bpmnFileMatch.name);
+        }
+        setFinished(true);
+        setStarted(false);
+        toasting('success', 'Success', 'Process Mining was successful');
+      } else {
+        throw new Error('Process mining terminated unsuccessfully');
+      }
+    } catch (err) {
+      setStarted(false);
+      setFinished(true);
+      if (window.canceled || axios.isCancel(err)) {
+        toasting('info', 'Canceled', 'Process Mining was canceled');
+      } else {
+        console.log(err);
+        toasting('error', 'error', 'Process Mining was not successful');
         setErrored(true);
       }
     }
   };
 
-  // Function to abort the Process Mining
   const abort = () => {
-    console.log("abort");
+    console.log('abort');
     window.canceled = true;
-    // Cancelling the source and updating the finished and started states
-    source.current.cancel("Process Mining was canceled22");
+    source.current.cancel('Process Mining was canceled');
     setStarted(false);
-    setResponse({ message: "canceled" }); 
+    setResponse({ message: 'canceled' });
   };
 
-  //  function to download the file
-  const download = async (data, fileName, encoding='charset=UTF-8') => {
-    // Fetching the file, creating a blob and a URL
-    const encodedData = encodeURIComponent(data);
-    const a = document.createElement("a");
-    // Creating a download link and triggering a click event
-    const fileType = fileName.split('.').pop();
-
-    a.href = 'data:application/' + fileType + ';' + encoding + ',' + encodedData;
-    a.download = fileName;
-    // a.download = `${sessionStorage.getItem("currentProject")}_${name}.${type}`;
-    a.click();
-  };
-
-  function fileSelect(title, state, setState, filter, moreOptions=[]) {
-    return <Box>
-        <Text fontSize="s" textAlign="start" color="#485152" fontWeight="bold" >{title}</Text>
-        <Select value={state} placeholder = {title} width = '100%' {...(!state && {color: "gray"})} backgroundColor= 'white' icon={<FiChevronDown />} onChange={(evt) => {setState(evt.target.value)}}>
-        {
-            fileList
-                .filter(filter)
-                .map((file, index) => {
-                    return  <option key={index} value= {file} color="black">{file}</option>
-                })
-                .concat(moreOptions)
-        }
+// Responsible for dropdown Select listing project files
+function fileSelect(title, state, setState, filter) {
+  return (
+    <Box w="full">
+      <Text fontSize="sm" fontWeight="600" color="gray.700" mb={2}>
+        {title}
+      </Text>
+      <Select
+        value={state}
+        placeholder={title}
+        size="md"
+        variant="filled"
+        bg="gray.50"
+        border="1px"
+        borderColor="gray.200"
+        borderRadius="lg"
+        w="full"
+        minW={{ base: '100%', md: '260px' }}
+        _hover={{ borderColor: 'gray.300', bg: 'white' }}
+        _focus={{
+          borderColor: '#2F80ED',
+          boxShadow: '0 0 0 1px #2F80ED',
+          bg: 'white',
+        }}
+        onChange={evt => {
+          setState(evt.target.value);
+          }}
+        >
+          {fileList.filter(filter).map((file, index) => {
+            return (
+              <option key={index} value={file}>
+                {file}
+              </option>
+            );
+          })}
         </Select>
-    </Box>
+      </Box>
+    );
   }
 
   const [fileList, setFileList] = useState([]);
 
-    function updateFileList() {
-        getFiles(projectName).then(newFileList => {
-            if (fileList.join(',') !== newFileList.join(',')) {
-                setFileList(newFileList);
-            }
-        });
+  // Asks storage for current files and updated state
+  function updateFileList() {
+    getFiles(projectName).then(newFileList => {
+      // If nothing changed avoid state update
+      if (fileList.join(',') !== newFileList.join(',')) {
+        setFileList(newFileList);
+      }
+    });
+  }
+
+  updateFileList();
+  
+  /**
+   * statusMeta decides on the status when we "Start Mining"
+   * It is responsible for:
+   * - label explanation of the state
+   * - icon
+   * - color
+   * 
+   * And it is depended on state like running/needs attention/error/ready/completed
+   */
+  const statusMeta = useMemo(() => {
+    if (started) {
+      return {
+        label: 'Running',
+        colorScheme: 'blue',
+        icon: FiPlay,
+        accent: '#2563EB',
+      };
     }
+    if (errored) {
+      return {
+        label: 'Needs attention',
+        colorScheme: 'red',
+        icon: FiAlertCircle,
+        accent: '#DC2626',
+      };
+    }
+    if (finished) {
+      return {
+        label: 'Completed',
+        colorScheme: 'green',
+        icon: FiCheckCircle,
+        accent: '#059669',
+      };
+    }
+    if (!logFile || !miner) {
+      return {
+        label: 'Setup required',
+        colorScheme: 'red',
+        icon: FiActivity,
+        accent: '#DC2626',
+      };
+    }
+    return {
+      label: 'Ready',
+      colorScheme: 'blue',
+      icon: FiActivity,
+      accent: '#1e459cff',
+    };
+  }, [started, finished, errored, logFile, miner]);
 
-    updateFileList();
+  // This part is responsible for documenting the date and time of last run
+  const lastRunTimestamp = useMemo(() => {
+    if (!response?.finished) {
+      return null;
+    }
+    const date = new Date(response.finished);
+    return Number.isNaN(date.getTime()) ? null : date.toLocaleString();
+  }, [response]);
 
-    return (
-        <Box h="93vh" overflowY="auto" p="5" >
-        <Stack gap="2">
-        <Heading size='lg' >Run Miner</Heading>
+  // Shows how many .csv and .xes files exist in the project
+  const eventLogCount = useMemo(
+    () => fileList.filter(file => file.endsWith('.xes') || file.endsWith('.csv')).length,
+    [fileList]
+  );
 
-        <RunProgressIndicationBar {...{started, finished, errored}}/>
+  /**
+   * readyToConvert check if everything for converting to scenario is ready, then button "Convert to scenario" can be active
+   * It is ready in case:
+   * - Json file is selected
+   * - bpmn file is selected
+   * 
+   */ 
 
-            <Card bg="white">
-                <CardHeader>
-                    <Heading size='md'> Start Process Miner Run </Heading>
-                </CardHeader>
-                <CardBody>
-                  
-                    <Flex
-                        gap="5"
-                        flexDirection="row"
-                        alignItems="top"
-                        mt="-4"
+  const readyToConvert = Boolean(configFile && bpmnFile);
+
+  const convertToScenario = async () => {
+    const name = scenarioName.trim();
+    if (!name) return;
+    try {
+      setConverting(true);
+      console.log('Converting files ' + configFile + ' ' + bpmnFile);
+      const converted = convertSimodOutput(
+        (await getFile(projectName, configFile)).data,
+        (await getFile(projectName, bpmnFile)).data
+      );
+
+      const logFileName =
+        logFile ||
+        fileList.filter(file => file.endsWith('.xes') || file.endsWith('.csv'))[0];
+
+      const eventLog = (await getFile(projectName, logFileName)).data;
+      converted.numberOfInstances = getNumberOfInstances(eventLog, logFileName);
+
+      converted.scenarioName = name;
+      getData().addScenario(converted);
+      toasting('success', 'Success', 'Scenario created successfully');
+      setScenarioModalOpen(false);
+      setScenarioName('');
+    } catch (error) {
+      console.error('Error converting to scenario:', error);
+      toasting('error', 'Error', 'Failed to convert to scenario: ' + error.message);
+    } finally {
+      setConverting(false);
+    }
+  };
+
+  // Short status text for help
+  const statusHelper = useMemo(() => {
+    if (started) return 'Mining in progress';
+    if (errored) return 'Needs attention';
+    if (finished) {
+      return lastRunTimestamp
+        ? `Completed ${lastRunTimestamp}`
+        : 'Completed successfully';
+    }
+    if (!logFile || !miner) return 'Select log and miner to begin';
+    return 'Ready to start';
+  }, [started, errored, finished, lastRunTimestamp, logFile, miner]);
+  const hasLatestOutput =
+    typeof response?.message === 'string' && response.message.trim().length > 0;
+  const latestOutputStatus = hasLatestOutput ? 'Available' : 'No run yet';
+  const hasGeneratedFiles =
+    Array.isArray(response?.files) && response.files.length > 0;
+
+  const scrollToOutputCard = () => {
+    if (outputCardRef.current) {
+      outputCardRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  };
+
+  // Creates a .zip file containing all output files, and triggers a download
+  const downloadAllFiles = async () => {
+    if (!hasGeneratedFiles || downloadingFiles) return;
+    try {
+      setDownloadingFiles(true);
+      const zip = new JSZip();
+      // Add each file into zip
+      await Promise.all(
+        response.files.map(async fileName => {
+          const stored = await getFile(projectName, `simod_results/${fileName}`);
+          if (stored?.data !== undefined) {
+            zip.file(fileName, stored.data);
+          }
+        })
+      );
+      // Generate zip file
+      const content = await zip.generateAsync({ type: 'blob' });
+      // Create temporary URL and force browser download
+      const url = URL.createObjectURL(content);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `${projectName}-process-miner-output.zip`;
+      link.click();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error(err);
+      toasting('error', 'Download failed', 'Unable to bundle miner files.');
+    } finally {
+      setDownloadingFiles(false);
+    }
+  };
+
+  /**
+   * Header - Top summary overview bar describing:
+   * - Status
+   * - Available Logs count
+   * - Latest output
+   * - Last run timestamp
+   */
+  const headerStats = useMemo(
+    () => [
+      {
+        key: 'status',
+        label: 'Status',
+        value: statusMeta.label,
+        helper: statusHelper,
+        icon: statusMeta.icon,
+      },
+      {
+        key: 'logs',
+        label: 'Logs',
+        value: eventLogCount,
+        helper: eventLogCount === 1 ? 'Log ready' : 'Logs ready',
+        icon: FiFileText,
+      },
+      {
+        key: 'latest-output',
+        label: 'Latest output',
+        value: latestOutputStatus,
+        helper: response?.requestId
+          ? `Request ${response.requestId}`
+          : 'Start a run to produce output',
+        icon: FiFileText,
+      },
+      {
+        key: 'last-run',
+        label: 'Last run',
+        value: lastRunTimestamp || 'No run yet',
+        helper: lastRunTimestamp
+          ? 'Finished successfully'
+          : 'Run the miner to capture results',
+        icon: FiClock,
+      },
+    ],
+    [
+      statusMeta.label,
+      statusMeta.icon,
+      statusHelper,
+      eventLogCount,
+      latestOutputStatus,
+      response?.message,
+      response?.requestId,
+      lastRunTimestamp,
+    ]
+  );
+
+  // Style settings for layout
+  const wideContainer = {
+    base: '100%',
+    xl: 'clamp(1200px, calc(100vw - var(--sb-width, 80px) - 64px), 1440px)',
+  };
+
+  const cardSurfaceProps = {
+    borderRadius: '2xl',
+    border: '1px solid rgba(15, 23, 42, 0.08)',
+    boxShadow: 'md',
+    bg: 'white',
+  };
+
+  //UI
+  return (
+    <Box
+      minH="93vh"
+      overflowY="auto"
+      bgGradient="linear(to-br, #F6FAFF, #EEF2FF)"
+      px={{ base: 4, md: 8 }}
+      py={{ base: 2, md: 3 }}
+    >
+      <Stack spacing={3} maxW={wideContainer} mx="auto">
+        {/* Header bar with blue gradient */}
+        <Card
+          borderRadius="3xl"
+          bgGradient="linear(to-r, #0F172A, #1D4ED8)"
+          color="white"
+          boxShadow="0 24px 60px rgba(15, 23, 42, 0.25)"
+          border="none"
+        >
+          <CardBody>
+            <Flex justify="space-between" align="flex-start" gap={4}>
+              <Box>
+                <Heading size="lg" mb={2}>
+                  Process Mining
+                </Heading>
+                <Text
+                  color="whiteAlpha.800"
+                  maxW="100%"
+                  whiteSpace={{ base: 'normal', md: 'nowrap' }}
+                >
+                  Discover data-backed process models, monitor status, and turn discoveries into ready-to-run
+                  scenarios from one calm surface.
+                </Text>
+              </Box>
+              {/* Button to collapse and expand the top summary overview */}
+              <IconButton
+                aria-label={detailsCollapsed ? 'Expand details' : 'Collapse details'}
+                icon={detailsCollapsed ? <FiChevronDown /> : <FiChevronUp />}
+                variant="ghost"
+                color="white"
+                _hover={{ bg: 'whiteAlpha.200' }}
+                onClick={() => setDetailsCollapsed(prev => !prev)}
+              />
+            </Flex>
+            {/* Top Summary shown only when not collapsed */}
+            {!detailsCollapsed && (
+            <SimpleGrid columns={{ base: 1, md: 2, xl: 4 }} spacing={4} mt={8}>
+              {headerStats.map(stat => (
+                <Box
+                  key={stat.key}
+                  bg="whiteAlpha.100"
+                  borderRadius="xl"
+                  p={4}
+                  border="1px solid"
+                  borderColor="whiteAlpha.200"
+                >
+                  <HStack justify="space-between" mb={3}>
+                    <Text fontSize="xs" letterSpacing="0.18em" color="whiteAlpha.700">
+                      {stat.label}
+                    </Text>
+                    <Icon as={stat.icon} boxSize={5} color="whiteAlpha.900" />
+                  </HStack>
+                  {/* Latest output summary box has extra button for download of the files*/}
+                  {stat.key === 'latest-output' ? (
+                  <>
+                    <Text fontSize="xl" fontWeight="700">
+                        {stat.value}
+                      </Text>
+                      <Text fontSize="sm" color="whiteAlpha.800" mt={1}>
+                        {stat.helper}
+                      </Text>
+                      {hasGeneratedFiles && (
+                        <Button
+                          mt={3}
+                          width="100%"
+                          size="sm"
+                          variant="outline"
+                          colorScheme="whiteAlpha"
+                          color="white"
+                          borderColor="whiteAlpha.400"
+                          _hover={{ bg: 'whiteAlpha.200' }}
+                          onClick={downloadAllFiles}
+                          isLoading={downloadingFiles}
+                          isDisabled={!hasGeneratedFiles || downloadingFiles}
                         >
-                            <Box>         
-                                {fileSelect('Select Event Log:', logFile, setLogFile, file => file.endsWith('.xes'))}
-                                <Button /*variant="link"*/ onClick={() => {
-                                    uploadFileToProject(projectName).then(file => {
-                                        updateFileList();
-                                        setLogFile(file);
-                                    })
-                                }}>Upload new Event Log</Button>
-                            </Box>
-                            <Box>
-                                <Text fontSize="s" textAlign="start" color="#485152" fontWeight="bold" > Select Process Miner:</Text>
-                                <Select value={miner} placeholder = 'choose miner' width = '100%' {...(!miner && {color: "gray"})}  backgroundColor= 'white' icon={<FiChevronDown />} onChange={evt => setMiner(evt.target.value)}>
-                                    <option value='Simod' color="black">Simod</option>
-                                </Select>
-                            </Box>
-                            
-                            {!started&& 
-                            <Button variant="outline" bg="#FFFF" onClick={start} disabled={!logFile || !miner}>
-                                <Text color="RGBA(0, 0, 0, 0.64)" fontWeight="bold">Start Miner{JSON.parse(sessionStorage.getItem('DEBUG')) && '*'}</Text>
-                            </Button>}
-
-                            {started&& 
-                            <Button variant="outline" bg="#FFFF" onClick={abort}>
-                                <Text color="RGBA(0, 0, 0, 0.64)" fontWeight="bold">Abort Miner</Text>
-                            </Button>
-                            }
-
-                        </Flex>
-                </CardBody>
-            </Card>
-
-            <Card bg="white">
-                <CardHeader>
-                    <Heading size='md'> Convert Miner Output to Scenario: </Heading>
-                </CardHeader>
-                <CardBody>
-                    <Flex
-                    gap="15"
-                    flexDirection="row"
-                    alignItems="end"
-                    >               
-                        {fileSelect('Select .json Config File:', configFile, setConfigFile, file => file.endsWith('.json') && file.includes('simulation_parameters') && !file.includes('converted'))}
-                        {fileSelect('Select Bpmn File:', bpmnFile, setBpmnFile, file => file.endsWith('.bpmn'))}
-                        
-                        <Button disabled={!configFile || !bpmnFile} onClick={async () => {
-                            console.log('Converting files ' + configFile + ' ' + bpmnFile)
-                            const converted = convertSimodOutput((await getFile(projectName, configFile)).data, (await getFile(projectName, bpmnFile)).data);
-                            const eventLog = (await getFile(projectName, logFile || fileList.filter(file => file.endsWith('.xes'))[0])).data; //TODO what if somebody selects another config?
-                            converted.numberOfInstances = getNumberOfInstances(eventLog);
-
-                            const scenarioName = window.prompt('Please enter scenario name');
-                            if (scenarioName) {
-                                converted.scenarioName = scenarioName;
-                                getData().addScenario(converted);
-                            }
-                        }}>
-                            <Text color="RGBA(0, 0, 0, 0.64)" fontWeight="bold">Convert to Scenario</Text>
+                          Download files
                         </Button>
+                      )}
+                    </>
+                  ) : (
+                    <>
+                      <Text fontSize="xl" fontWeight="700">                      {stat.value}
+                    </Text>
+                    <Text fontSize="sm" color="whiteAlpha.800">
+                      {stat.helper}
+                    </Text>
+                  </>
+                  )}
+                </Box>
+              ))}
+            </SimpleGrid>
+            )}
+          </CardBody>
+        </Card>
 
-                    </Flex>
-                </CardBody>
-            </Card>
+        {/* Start Mining box with Select log, select miner and start mining button */}
+        <Card {...cardSurfaceProps}>
+          <CardHeader borderBottom="1px" borderColor="gray.100">
+            <Heading size="md" color="#0F172A">
+              Start Process Mining
+            </Heading>
+            <Text fontSize="sm" color="gray.500" mt={1}>
+              Connect an event log, choose your miner, and launch the run when ready.
+            </Text>
+          </CardHeader>
+          <CardBody>
 
-            <ToolRunOutputCard {...{projectName, response, toolName : 'Miner', processName : 'process mining', filePrefix : 'simod_results'}}/>         
-        
+            <SimpleGrid
+              columns={{ base: 1, md: 2 }}
+              columnGap={6}
+              rowGap={3}
+              mb={4}
+              alignItems="start"
+            >
+              {/* Event log selection + upload button */}
+              <Box>
+                {fileSelect('Event Log (.xes or .csv)', logFile, setLogFile, file =>
+                  file.endsWith('.xes') || file.endsWith('.csv')
+                )}
+                <Button
+                  leftIcon={<FiUpload />}
+                  size="sm"
+                  variant="ghost"
+                  mt={2}
+                  colorScheme="blue"
+                  onClick={() => {
+                    uploadFileToProject(projectName).then(file => {
+                      updateFileList();
+                      setLogFile(file);
+                    });
+                  }}
+                >
+                  Upload Event Log
+                </Button>
+              </Box>
+              {/* Miner selection */}
+              <Box>
+                <Text fontSize="sm" fontWeight="600" color="gray.700" mb={2}>
+                  Process Miner
+                </Text>
+                <Select
+                  value={miner}
+                  placeholder="Select miner"
+                  size="md"
+                  variant="filled"
+                  bg="gray.50"
+                  border="1px"
+                  borderColor="gray.200"
+                  borderRadius="lg"
+                  w="full"
+                  minW={{ base: '100%', md: '260px' }}
+                  _hover={{ borderColor: 'gray.300', bg: 'white' }}
+                  _focus={{
+                    borderColor: '#2F80ED',
+                    boxShadow: '0 0 0 1px #2F80ED',
+                    bg: 'white',
+                  }}
+                  onChange={evt => setMiner(evt.target.value)}
+                >
+                  <option value="Simod">Simod</option>
+                </Select>
+              </Box>
+            </SimpleGrid>
             
-        </Stack>
+            {/* Start or abort button */}
+            <Flex gap={3} justify="flex-end" flexWrap="wrap" mt={-1}>
+              {!started ? (
+                <Button
+                  leftIcon={<FiPlay />}
+                  colorScheme="blue"
+                  bg="#2563EB"
+                  color="white"
+                  px={8}
+                  py={6}
+                  fontWeight="600"
+                  onClick={start}
+                  isDisabled={!logFile || !miner}
+                  _hover={{ bg: '#1D4ED8' }}
+                  borderRadius="full"
+                >
+                  Start Mining
+                  {JSON.parse(sessionStorage.getItem('DEBUG')) && '*'}
+                </Button>
+              ) : (
+                <Button
+                  leftIcon={<FiStopCircle />}
+                  colorScheme="red"
+                  variant="outline"
+                  borderRadius="full"
+                  onClick={abort}
+                >
+                  Abort Mining
+                </Button>
+              )}
+            </Flex>
+
+            {/* Progress bar while running the process miner */}
+            <Box mt={4}>
+              <RunProgressIndicationBar {...{ started, finished, errored }} />
+            </Box>
+          </CardBody>
+        </Card>
+        {/* Output Card contains console output and list of files */}
+        <Box ref={outputCardRef}>
+        <ToolRunOutputCard
+          {...{
+            projectName,
+            response,
+            toolName: 'Miner',
+            processName: 'process mining',
+            filePrefix: 'simod_results',
+              downloadAllLabel: 'Download files',
+              onDownloadAll: downloadAllFiles,
+              downloadAllDisabled: !hasGeneratedFiles,
+              downloadAllLoading: downloadingFiles,
+          }}
+        />
         </Box>
-    )
-}
+        {/* Convert to scenario card */}
+        <Card {...cardSurfaceProps}>
+          <CardHeader borderBottom="1px" borderColor="gray.100">
+            <Heading size="md" color="#0F172A">
+              Convert to Scenario
+            </Heading>
+            <Text fontSize="sm" color="gray.500" mt={2}>
+              Pair the simulation parameters with the mined BPMN to generate a scenario ready for SimuBridge.
+            </Text>
+          </CardHeader>
+          <CardBody>
+            <SimpleGrid columns={{ base: 1, md: 2 }} spacing={6} mb={6}>
+              {fileSelect(
+                'Config File (.json)',
+                configFile,
+                setConfigFile,
+                file =>
+                  file.endsWith('.json') &&
+                  file.startsWith('simod_results/') &&
+                  !file.includes('converted')
+              )}
+              {fileSelect('BPMN File', bpmnFile, setBpmnFile, file =>
+                file.endsWith('.bpmn') &&
+                file.startsWith('simod_results/')
+              )}
+            </SimpleGrid>
+
+            {/* "Convert to Scenario" button is diabled until both json and bpmn are selected */}
+            <Tooltip
+              label="Select both a configuration JSON and a BPMN to enable conversion."
+              hasArrow
+              isDisabled={readyToConvert}
+            >
+              <Flex justify="flex-end">
+                <Button
+                  leftIcon={<FiRefreshCw />}
+                  colorScheme="blue"
+                  bg={readyToConvert ? '#2563EB' : '#93C5FD'}
+                  color="white"
+                  isDisabled={!readyToConvert}
+                  onClick={() => {
+                    setScenarioName('');
+                    setScenarioModalOpen(true);
+                  }}
+                  _hover={readyToConvert ? { bg: '#1D4ED8' } : { bg: '#80B8FF' }}
+                  boxShadow={readyToConvert ? 'md' : 'none'}
+                  borderRadius="full"
+                >
+                  Convert to Scenario
+                </Button>
+              </Flex>
+            </Tooltip>
+          </CardBody>
+        </Card>
+      </Stack>
+
+      {/* Pop up which appears after user press button "Convert to Scenario" and asks for Scenario name and then creates scenario */}
+      <Modal
+        isOpen={scenarioModalOpen}
+        onClose={() => setScenarioModalOpen(false)}
+        isCentered
+      >
+        <ModalOverlay />
+        <ModalContent bg="blue.50">
+          <ModalHeader>Convert to scenario</ModalHeader>
+          <ModalCloseButton />
+          <ModalBody>
+            <Text fontSize="sm" color="gray.700" mb={2}>
+              Name the scenario to add it to SimuBridge.
+            </Text>
+            <Input
+              placeholder="e.g., Mined scenario – Base log"
+              value={scenarioName}
+              onChange={e => setScenarioName(e.target.value)}
+              bg="white"
+            />
+          </ModalBody>
+          <ModalFooter gap={2}>
+            <Button variant="ghost" onClick={() => setScenarioModalOpen(false)}>
+              Cancel
+            </Button>
+            <Button
+              colorScheme="blue"
+              onClick={convertToScenario}
+              isDisabled={!scenarioName.trim()}
+              isLoading={converting}
+            >
+              Create
+            </Button>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
+    </Box>
+  );
+};
+
 export default ProcessMinerPage;

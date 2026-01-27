@@ -1,182 +1,638 @@
-import React, { useState, useRef } from "react";
-import { Flex, Heading, Card, CardHeader, CardBody, Text, Select, Stack, Button, Progress, Box, Textarea, UnorderedList, ListItem } from '@chakra-ui/react';
-import { FiChevronDown } from 'react-icons/fi';
-import axios from 'axios';
+import { useState, useRef, useEffect } from "react";
+import {
+  Flex,
+  Heading,
+  Card,
+  CardHeader,
+  CardBody,
+  Text,
+  Select,
+  Stack,
+  Button,
+  Box,
+  SimpleGrid,
+  Icon,
+  HStack,
+  IconButton,
+} from "@chakra-ui/react";
+import {
+  FiPlay,
+  FiStopCircle,
+  FiCheckCircle,
+  FiAlertCircle,
+  FiClock,
+  FiLayers,
+  FiFileText,
+  FiChevronUp,
+  FiChevronDown,
+} from "react-icons/fi";
+import axios from "axios";
+import JSZip from "jszip";
 
-import { getFile, getScenarioFileName, setFile } from "../../util/Storage";
+import { setFile, getFile } from "../../util/Storage";
 import { convertScenario } from "simulation-bridge-converter-scylla/ConvertScenario";
 import RunProgressIndicationBar from "../RunProgressIndicationBar";
 import ToolRunOutputCard from "../ToolRunOutputCard";
+import SimulationOutputSummary from "./SimulationOutputSummary";
 
-const SimulationPage = ({projectName, getData, toasting }) => {
-
-// Setting initial states of started, finished, and response
+/**
+ * SimulationPage
+ * --------------
+ * UI page that lets the user run a simulation for a selected scenario.
+ *
+ * Responsibilities:
+ * - Allow user to select a scenario and simulator implementation
+ * - Convert the scenario into simulator-specific config files (BPMN + XML)
+ * - Call the local simulator API endpoint and wait for results
+ * - Store returned files into local storage (project-scoped)
+ * - Present status, progress, and a summary of output artifacts
+ * - Allow user to download all output files as a ZIP archive
+ *
+ * Props:
+ * - projectName: name of the active project (used for storage keys)
+ * - getData: accessor for project data (scenarios/models) from App
+ * - toasting: helper for user notifications (success/error messages)
+ */
+const SimulationPage = ({ projectName, getData, toasting }) => {
+  /**
+   * Run status flags
+   * started  -> simulation request is currently running
+   * finished -> request completed (success or error)
+   * errored  -> request completed with an error
+   */
   const [started, setStarted] = useState(false);
   const [finished, setFinished] = useState(false);
   const [errored, setErrored] = useState(false);
-  const [response, setResponse] = useState(JSON.parse(sessionStorage.getItem(projectName+'/lastSimulatorResponse')) || {});
 
+  /**
+   * response stores the latest simulator response metadata:
+   * - message: text returned by the simulator
+   * - files: list of generated file names
+   * - finished: timestamp when run completed
+   * - requestId: run identifier used for storage prefixing
+   *
+   * The state is initialized from sessionStorage so the last output
+   * survives a page refresh inside the current browser session.
+   */
+  const [response, setResponse] = useState(
+    JSON.parse(sessionStorage.getItem(projectName + "/lastSimulatorResponse")) ||
+      {}
+  );
+
+  /**
+   * UI state for downloads and collapsing the header details section.
+   */
+  const [downloadingFiles, setDownloadingFiles] = useState(false);
+  const [detailsCollapsed, setDetailsCollapsed] = useState(false);
+
+  /**
+   * User selections:
+   * - scenarioName: scenario to simulate
+   * - simulator: simulator backend choice (currently only Scylla)
+   *
+   * The simulator selection is persisted in sessionStorage.
+   */
   const [scenarioName, setScenarioName] = useState();
-  const [simulator, setSimulator] = useState();
+  const [simulator, setSimulator] = useState(
+    () => sessionStorage.getItem(projectName + "/selectedSimulator") || undefined
+  );
 
-  // Creating a reference to the source that can be cancelled if needed
+  /**
+   * Axios CancelToken source is kept in a ref so it can be used by abort().
+   * outputCardRef is used to scroll the page to output details.
+   */
   const source = useRef(null);
+  const outputCardRef = useRef(null);
 
-  // function to start the simulation
+  /**
+   * Pre-computed derived values for UI display.
+   */
+  const availableScenarios = getData().getAllScenarios();
+  const scenarioCount = availableScenarios.length;
+  const filesReady = response?.files?.length || 0;
+
+  const selectionReady = Boolean(scenarioName) && Boolean(simulator);
+
+  /**
+   * Status text/icon shown in the hero header section.
+   */
+  const statusLabel = started
+    ? "Running"
+    : finished
+    ? errored
+      ? "Attention needed"
+      : "Completed"
+    : selectionReady
+    ? "Ready"
+    : "Setup required";
+
+  const StatusIcon = started
+    ? FiPlay
+    : finished
+    ? errored
+      ? FiAlertCircle
+      : FiCheckCircle
+    : FiClock;
+
+  const statusHelperText = started
+    ? "Simulation in progress"
+    : finished
+    ? errored
+      ? "Review output for details"
+      : "Available for inspection"
+    : selectionReady
+    ? "Selections prepared"
+    : "Choose a scenario and simulator";
+
+  /**
+   * Configuration fields used to render the selection UI.
+   * Each field defines its label, value, helper text, and options.
+   */
+  const selectionFields = [
+    {
+      key: "scenario",
+      label: "Scenario",
+      value: scenarioName,
+      placeholder: scenarioCount ? "Select scenario" : "No scenarios available",
+      helperText: "Select the scenario you want to simulate",
+      onChange: setScenarioName,
+      options: availableScenarios.map((scenario) => ({
+        value: scenario.scenarioName,
+        label: scenario.scenarioName,
+      })),
+    },
+    {
+      key: "simulator",
+      label: "Simulator",
+      value: simulator,
+      placeholder: "Select simulator",
+      helperText: "Select an available simulator",
+      onChange: setSimulator,
+      options: [{ value: "Scylla", label: "Scylla" }],
+    },
+  ];
+
+  /**
+   * selectionMeta adds a "complete" flag used for validating readiness.
+   */
+  const selectionMeta = selectionFields.map((field) => ({
+    ...field,
+    complete: Boolean(field.value),
+  }));
+
+  const allSelectionsMade = selectionMeta.every((field) => field.complete);
+
+  /**
+   * Determine what we can show about the latest run.
+   */
+  const hasLatestOutput =
+    typeof response?.message === "string" && response.message.trim().length > 0;
+  const latestOutputStatus = hasLatestOutput ? "Available" : "No run yet";
+
+  const hasGeneratedFiles =
+    Array.isArray(response?.files) && response.files.length > 0;
+
+  /**
+   * Action button behavior:
+   * - If started -> button aborts
+   * - Otherwise -> button starts a simulation
+   */
+  const disablePrimaryAction = started ? false : !allSelectionsMade;
+
+  const handlePrimaryAction = () => {
+    if (started) {
+      abort();
+    } else {
+      start();
+    }
+  };
+
+  const ActionButtonIcon = started ? FiStopCircle : FiPlay;
+  const actionButtonLabel = started ? "Abort simulation" : "Start simulation";
+
+  /**
+   * start
+   * -----
+   * Runs the simulation:
+   * 1) Reset output UI state
+   * 2) Convert scenario to simulator artifacts (BPMN + XML configs)
+   * 3) POST multipart/form-data to the local simulator API
+   * 4) Store returned output files into project storage
+   * 5) Save response metadata to sessionStorage for persistence
+   */
   const start = async () => {
-    // Resetting response and finished states
     setResponse({ message: "", files: [] });
     setFinished(false);
     setErrored(false);
-    // Updating the started state
     setStarted(true);
 
-    // Creating a cancel token and assigning it to the current source
     source.current = axios.CancelToken.source();
 
     try {
-
-      const requestId = 'request' + Math.random();
+      const requestId = "request" + Math.random();
       const formData = new FormData();
+
       const scenarioData = getData().getScenario(scenarioName);
-      
 
-      const {globalConfig, simConfigs} = await convertScenario(scenarioData);
-      const simConfig = simConfigs[0]; //TODO magic index access
-      const processModel = scenarioData.models[0]; //TODO magic index access
+      const { globalConfig, simConfigs } = await convertScenario(scenarioData);
+      const simConfig = simConfigs[0];
+      const processModel = scenarioData.models[0];
 
-      const bpmnFile = new File([processModel.BPMN], processModel.name + '.bpmn')
+      const bpmnFile = new File([processModel.BPMN], processModel.name + ".bpmn");
       formData.append("bpmn", bpmnFile, bpmnFile.name);
-      const globalConfigFile = new File([globalConfig], scenarioData.scenarioName + '_Global.xml')
-      formData.append("globalConfig", globalConfigFile, globalConfigFile.name);
-      const simConfigFile = new File([simConfig], scenarioData.scenarioName + '_' + bpmnFile.name + '_Sim.xml')
-      formData.append("simConfig", simConfigFile, simConfigFile.name); 
 
-      // Sending a POST request to apiTool.py in the Scylla-Container subproject, with the cancel token attached
+      const globalConfigFile = new File(
+        [globalConfig],
+        scenarioData.scenarioName + "_Global.xml"
+      );
+      formData.append("globalConfig", globalConfigFile, globalConfigFile.name);
+
+      const simConfigFile = new File(
+        [simConfig],
+        scenarioData.scenarioName + "_" + bpmnFile.name + "_Sim.xml"
+      );
+      formData.append("simConfig", simConfigFile, simConfigFile.name);
+
       const r = await axios.post("http://127.0.0.1:8080/scyllaapi", formData, {
         headers: {
-          'requestId' : requestId,
-          'Content-Type': 'multipart/form-data'
+          requestId: requestId,
+          "Content-Type": "multipart/form-data",
         },
-        cancelToken: source.current.token
+        cancelToken: source.current.token,
       });
-      r.data.files.forEach(file => {
-        setFile(projectName, requestId + '/' + file.name, file.data);
-      })
 
-      // Setting the response state and updating the finished and started states
-      
+      /**
+       * Store each output file under:
+       * projectName / requestId / filename
+       * so multiple runs do not overwrite each other.
+       */
+      r.data.files.forEach((file) => {
+        setFile(projectName, requestId + "/" + file.name, file.data);
+      });
+
       const responseObject = {
-        message : r.data.message,
-        files : r.data.files.map(file => file.name),
-        finished : new Date(),
-        requestId
-    }
-    setResponse(responseObject);
-    sessionStorage.setItem(projectName+'/lastSimulatorResponse', JSON.stringify(responseObject));
+        message: r.data.message,
+        files: r.data.files.map((file) => file.name),
+        finished: new Date(),
+        requestId,
+      };
+
+      setResponse(responseObject);
+
+      sessionStorage.setItem(
+        projectName + "/lastSimulatorResponse",
+        JSON.stringify(responseObject)
+      );
+
       setFinished(true);
       setStarted(false);
-      // Toasting a success message
       toasting("success", "Success", "Simulation was successful");
     } catch (err) {
-      // If there's a cancellation error, toast a success message
+      /**
+       * A canceled request is treated as a clean/expected interruption,
+       * while other errors mark the run as errored.
+       */
       if (axios.isCancel(err)) {
         toasting("success", "Success", "Simulation was canceled");
       } else {
-        // Otherwise, toast an error message
         setFinished(true);
         setStarted(false);
         setErrored(true);
-        console.log(err)
-        //TODO also display error occurence
+        console.log(err);
         toasting("error", "error", "Simulation was not successful");
       }
     }
   };
 
-  // Function to abort the simulation
+  /**
+   * abort
+   * -----
+   * Cancels the active Axios request and updates UI state accordingly.
+   */
   const abort = () => {
     console.log("abort");
-    // Cancelling the source and updating the finished and started states
     source.current.cancel("Simulation was canceled");
     setStarted(false);
     setResponse({ message: "canceled" });
   };
 
-  //  function to download the file
-  const download = async (data, fileName, encoding='charset=UTF-8') => {
-    // Fetching the file, creating a blob and a URL
-    const encodedData = encodeURIComponent(data);
-    const a = document.createElement("a");
-    // Creating a download link and triggering a click event
-    const fileType = fileName.split('.').pop();
+  /**
+   * Persist the selected simulator so the UI restores it on refresh.
+   */
+  useEffect(() => {
+    if (simulator) {
+      sessionStorage.setItem(projectName + "/selectedSimulator", simulator);
+    }
+  }, [simulator, projectName]);
 
-    a.href = 'data:application/' + fileType + ';' + encoding + ',' + encodedData;
-    a.download = fileName;
-    // a.download = `${sessionStorage.getItem("currentProject")}_${name}.${type}`;
-    a.click();
+  /**
+   * Listen for a custom global event ("simulatorChanged") to change simulator.
+   * This allows other parts of the UI to set simulator selection externally.
+   */
+  useEffect(() => {
+    const handler = (e) => {
+      const val = e.detail;
+      setSimulator(val);
+    };
+    window.addEventListener("simulatorChanged", handler);
+    return () => window.removeEventListener("simulatorChanged", handler);
+  }, []);
+
+  /**
+   * scrollToOutputCard
+   * ------------------
+   * Convenience helper to jump to the output card (not currently invoked in this file).
+   */
+  const scrollToOutputCard = () => {
+    if (outputCardRef.current) {
+      outputCardRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
   };
 
+  /**
+   * downloadAllFiles
+   * ----------------
+   * Bundles all generated files into a zip and triggers a browser download.
+   *
+   * It reads each file from project storage using getFile(projectName, path).
+   */
+  const downloadAllFiles = async () => {
+    if (!hasGeneratedFiles || downloadingFiles) return;
 
+    try {
+      setDownloadingFiles(true);
 
-    return (
-        <Box h="93vh" overflowY="auto" p="5" >
-        <Stack gap="2">
-        <Heading size='lg' >Run Simulation</Heading>
+      const zip = new JSZip();
+      const prefix = response?.requestId ? response.requestId + "/" : "";
 
-        
-        <RunProgressIndicationBar {...{started, finished, errored}}/>
-            <Card bg="white">
-                <CardHeader>
-                    <Heading size='md'> Start Simulation Run </Heading>
-                </CardHeader>
-                <CardBody>
-                  
-                    <Flex
-                        gap="5"
-                        flexDirection="row"
-                        alignItems="end"
-                        mt="-4"
-                        >               
-                            <Box>
-                                <Text fontSize="s" textAlign="start" color="#485152" fontWeight="bold" > Select scenario:</Text>
-                                <Select value={scenarioName} placeholder = 'choose scenario' width = '100%' {...(!scenarioName && {color: "gray"})} backgroundColor= 'white' icon={<FiChevronDown />} onChange={evt => setScenarioName(evt.target.value)}>
-                                {
-                                  getData().getAllScenarios().map((scenario, index) => {
-                                    return  <option value= {scenario.scenarioName} color="black">{scenario.scenarioName}</option>
-                                  })
-                                }
-                                </Select>
-                            </Box>
-                            <Box>
-                                <Text fontSize="s" textAlign="start" color="#485152" fontWeight="bold" > Select simulator:</Text>
-                                <Select value={simulator} placeholder = 'choose simulator' width = '100%'  {...(!simulator && {color: "gray"})}  backgroundColor= 'white' icon={<FiChevronDown />} onChange={evt => setSimulator(evt.target.value)}>
-                                    <option value='Scylla' color="black">Scylla</option>
-                                </Select>
-                            </Box>
-                            
-                            {!started&& 
-                            <Button variant="outline" bg="#FFFF" onClick={start} disabled={!scenarioName || !simulator}>
-                                <Text color="RGBA(0, 0, 0, 0.64)" fontWeight="bold">Start Simulation</Text>
-                            </Button>}
+      await Promise.all(
+        response.files.map(async (fileName) => {
+          const stored = await getFile(projectName, prefix + fileName);
+          if (stored?.data !== undefined) {
+            zip.file(fileName, stored.data);
+          }
+        })
+      );
 
-                            {started&& 
-                            <Button variant="outline" bg="#FFFF" onClick={abort}>
-                                <Text color="RGBA(0, 0, 0, 0.64)" fontWeight="bold">Abort Simulation</Text>
-                            </Button>
-                            }
+      const content = await zip.generateAsync({ type: "blob" });
 
-                        </Flex>
-                </CardBody>
-            </Card>
+      const url = URL.createObjectURL(content);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `${projectName}-simulation-output.zip`;
+      link.click();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error(err);
+      toasting("error", "Download failed", "Unable to bundle simulation files.");
+    } finally {
+      setDownloadingFiles(false);
+    }
+  };
 
-            
-            <ToolRunOutputCard {...{projectName, response, toolName : 'Simulator', processName : 'simulation', filePrefix : response.requestId}}/>
-            
-        
-            
-        </Stack>
+  /**
+   * Data displayed in the hero header cards.
+   */
+  const headerStats = [
+    {
+      key: "status",
+      label: "Status",
+      value: statusLabel,
+      icon: StatusIcon,
+      helper: statusHelperText,
+    },
+    {
+      key: "scenarios",
+      label: "Scenarios",
+      value: scenarioCount,
+      icon: FiLayers,
+      helper: scenarioCount === 1 ? "Scenario available" : "Scenarios available",
+    },
+    {
+      key: "latest-output",
+      label: "Latest output",
+      value: latestOutputStatus,
+      icon: FiFileText,
+      helper: filesReady
+        ? `${filesReady} file${filesReady > 1 ? "s" : ""} generated`
+        : "Awaiting execution",
+    },
+  ];
+
+  /**
+   * Responsive max-width helper so the content stays wide but respects sidebar width.
+   */
+  const wideContainer = {
+    base: "100%",
+    xl: "clamp(1200px, calc(100vw - var(--sb-width, 80px) - 64px), 1440px)",
+  };
+
+  return (
+    <Box
+      minH="93vh"
+      overflowY="auto"
+      bgGradient="linear(to-br, #F6FAFF, #EEF2FF)"
+      px={{ base: 4, md: 8 }}
+      py={{ base: 2, md: 3 }}
+    >
+      <Stack spacing={3} maxW={wideContainer} mx="auto">
+        <Card
+          borderRadius="3xl"
+          bgGradient="linear(to-r, #0F172A, #1D4ED8)"
+          color="white"
+          boxShadow="0 24px 60px rgba(15, 23, 42, 0.25)"
+          border="none"
+        >
+          <CardBody>
+            <Flex justify="space-between" align="flex-start" gap={4}>
+              <Box>
+                <Heading size="lg" mb={2}>
+                  Simulation Control Center
+                </Heading>
+                <Text color="whiteAlpha.800" maxW="3xl">
+                  Configure like the overview page, execute with process miner
+                  clarity, and keep every run in view.
+                </Text>
+              </Box>
+
+              <IconButton
+                aria-label={detailsCollapsed ? "Expand details" : "Collapse details"}
+                icon={detailsCollapsed ? <FiChevronDown /> : <FiChevronUp />}
+                variant="ghost"
+                color="white"
+                _hover={{ bg: "whiteAlpha.200" }}
+                onClick={() => setDetailsCollapsed((prev) => !prev)}
+              />
+            </Flex>
+
+            {!detailsCollapsed && (
+              <SimpleGrid columns={{ base: 1, md: 2, xl: 4 }} spacing={4} mt={8}>
+                {headerStats.map((stat) => (
+                  <Box
+                    key={stat.key}
+                    bg="whiteAlpha.100"
+                    borderRadius="xl"
+                    p={4}
+                    border="1px solid"
+                    borderColor="whiteAlpha.200"
+                  >
+                    <HStack justify="space-between" mb={3}>
+                      <Text fontSize="xs" letterSpacing="0.18em" color="whiteAlpha.700">
+                        {stat.label}
+                      </Text>
+                      <Icon as={stat.icon} boxSize={5} color="whiteAlpha.900" />
+                    </HStack>
+
+                    {stat.key === "latest-output" ? (
+                      <>
+                        <Text fontSize="xl" fontWeight="700">
+                          {stat.value}
+                        </Text>
+                        <Text fontSize="sm" color="whiteAlpha.800" mt={1}>
+                          {stat.helper}
+                        </Text>
+
+                        {hasGeneratedFiles && (
+                          <Button
+                            mt={3}
+                            width="100%"
+                            size="sm"
+                            variant="outline"
+                            colorScheme="whiteAlpha"
+                            color="white"
+                            borderColor="whiteAlpha.400"
+                            _hover={{ bg: "whiteAlpha.200" }}
+                            onClick={downloadAllFiles}
+                            isLoading={downloadingFiles}
+                            isDisabled={!hasGeneratedFiles || downloadingFiles}
+                          >
+                            Download files
+                          </Button>
+                        )}
+                      </>
+                    ) : (
+                      <>
+                        <Text fontSize="xl" fontWeight="700">
+                          {stat.value}
+                        </Text>
+                        <Text fontSize="sm" color="whiteAlpha.800">
+                          {stat.helper}
+                        </Text>
+                      </>
+                    )}
+                  </Box>
+                ))}
+              </SimpleGrid>
+            )}
+          </CardBody>
+        </Card>
+
+        <Card
+          bg="white"
+          borderRadius="2xl"
+          border="1px solid rgba(15, 23, 42, 0.08)"
+        >
+          <CardHeader borderBottom="1px" borderColor="gray.100">
+            <Heading size="md" color="#0F172A">
+              Configure next run
+            </Heading>
+            <Text fontSize="sm" color="gray.500" mt={1}>
+              Set the essentials, then run when ready.
+            </Text>
+          </CardHeader>
+
+          <CardBody>
+            <SimpleGrid columns={{ base: 1, md: 2 }} spacing={6} mb={6}>
+              {selectionMeta.map((field) => (
+                <Box key={field.key}>
+                  <Text fontSize="sm" fontWeight="600" color="#0F172A" mb={2}>
+                    {field.label}
+                  </Text>
+                  <Select
+                    value={field.value}
+                    placeholder={field.placeholder}
+                    size="md"
+                    variant="filled"
+                    bg="gray.50"
+                    border="1px"
+                    borderColor="gray.200"
+                    borderRadius="lg"
+                    _hover={{ borderColor: "gray.300", bg: "white" }}
+                    _focus={{
+                      borderColor: "#2563EB",
+                      boxShadow: "0 0 0 1px #2563EB",
+                      bg: "white",
+                    }}
+                    onChange={(evt) => field.onChange(evt.target.value)}
+                    isDisabled={!field.options.length}
+                  >
+                    {field.options.map((option) => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </Select>
+                </Box>
+              ))}
+            </SimpleGrid>
+
+            <Flex
+              direction={{ base: "column", md: "row" }}
+              align={{ base: "stretch", md: "center" }}
+              justify="space-between"
+              gap={3}
+              mt={2}
+            >
+              <Box />
+
+              <Button
+                leftIcon={<ActionButtonIcon />}
+                onClick={handlePrimaryAction}
+                isDisabled={disablePrimaryAction}
+                borderRadius="full"
+                px={8}
+                py={6}
+                fontWeight="600"
+                colorScheme={started ? "red" : "blue"}
+                bg={started ? "white" : "#2563EB"}
+                color={started ? "#C53030" : "white"}
+                border={started ? "1px solid #C53030" : "none"}
+                _hover={started ? { bg: "#FFF5F5" } : { bg: "#1D4ED8" }}
+              >
+                {actionButtonLabel}
+              </Button>
+            </Flex>
+
+            <Box mt={4}>
+              <RunProgressIndicationBar {...{ started, finished, errored }} />
+            </Box>
+          </CardBody>
+        </Card>
+
+        <Box ref={outputCardRef}>
+          <ToolRunOutputCard
+            {...{
+              projectName,
+              response,
+              toolName: "Simulator",
+              processName: "simulation",
+              filePrefix: response.requestId,
+              downloadAllLabel: "Download files",
+              onDownloadAll: downloadAllFiles,
+              downloadAllDisabled: !hasGeneratedFiles,
+              downloadAllLoading: downloadingFiles,
+            }}
+          />
         </Box>
-    )
-}
+
+        <SimulationOutputSummary
+          projectName={projectName}
+          fileNames={response?.files}
+          filePrefix={response?.requestId}
+        />
+      </Stack>
+    </Box>
+  );
+};
+
 export default SimulationPage;
